@@ -1,33 +1,155 @@
-// lib/Pages/memory_card_page.dart
 import 'dart:io';
+import 'package:dementia_app/API/memory_card_image_upload_api.dart';
+import 'package:dementia_app/Pages/Cognitive_training/memory_card.dart';
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
-import '../Components/user_avatar.dart';
+import '../../Components/user_avatar.dart';
 
-class MemoryCardPage extends StatefulWidget {
-  const MemoryCardPage({super.key});
+
+class MemoryCardImageUploadPage extends StatefulWidget {
+  const MemoryCardImageUploadPage({super.key});
 
   @override
-  State<MemoryCardPage> createState() => _MemoryCardPageState();
+  State<MemoryCardImageUploadPage> createState() => _MemoryCardImageUploadPageState();
 }
 
-class _MemoryCardPageState extends State<MemoryCardPage> {
+class _MemoryCardImageUploadPageState extends State<MemoryCardImageUploadPage> {
   final supabase = Supabase.instance.client;
   final List<TextEditingController> _textControllers = List.generate(
       5, (index) => TextEditingController());
   final List<File?> _imageFiles = List.filled(5, null);
   bool _isUploading = false;
+  bool _isLoading = true;
 
-  bool get _isFormValid {
-    // Check if at least one pair of image and text is filled
+    @override
+  void initState() {
+    super.initState();
+    _checkExistingImages();
+  }
+
+Future<void> _checkExistingImages() async {
+  try {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final userId = user.id;
+    final folderPath = '$userId/memory_card';
+    
+    // Set a timeout for the storage request
+    final storageResponse = await Future.any([
+      supabase.storage.from('cognitive_training').list(path: folderPath),
+      Future.delayed(const Duration(seconds: 3), () => throw 'timeout')
+    ]);
+    
+    // Fast path: continue to upload if not enough images
+    if (storageResponse.length < 5) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    // Process image data in parallel
+    final futures = <Future<Map<String, String>>>[];
+    
     for (int i = 0; i < 5; i++) {
-      if (_imageFiles[i] != null && _textControllers[i].text.isNotEmpty) {
-        return true;
+      futures.add(_processImageData(folderPath, storageResponse[i]));
+    }
+    
+    final results = await Future.wait(futures);
+    
+    // Navigate to the game
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MemoryCardGamePage(cardData: results),
+        ),
+      );
+    }
+  } catch (e) {
+    // Continue to upload page on error
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+}
+
+  Future<Map<String, String>> _processImageData(String folderPath, FileObject fileData) async {
+    final filePath = '$folderPath/${fileData.name}';
+    final imageUrl = await supabase.storage.from('cognitive_training').createSignedUrl(
+      filePath, 
+      60 * 60 * 24 * 30, // 30 days expiry
+    );
+    
+    // Get the actual text from the database instead of parsing filename
+    final user = supabase.auth.currentUser;
+    if (user == null) throw 'User not authenticated';
+    
+    // Query the database to get the card_text that matches this image URL
+    final response = await supabase
+        .from('memory_card')
+        .select('card_text')
+        .eq('user_id', user.id)
+        .eq('image_url', imageUrl)
+        .maybeSingle();
+    
+    // If found in database, use that text, otherwise fallback to filename
+    String cardText;
+    if (response != null && response['card_text'] != null) {
+      cardText = response['card_text'];
+    } else {
+      // Try to extract from filename as fallback
+      final fileName = path.basenameWithoutExtension(fileData.name);
+      // Try to find text part between first and second underscore
+      final parts = fileName.split('_');
+      if (parts.length >= 3) {
+        // The text should be the second part (index 1) if filename format is timestamp_text_remainder
+        cardText = parts[1];
+      } else {
+        cardText = fileName; // Use whole filename if can't parse
       }
     }
-    return false;
+    
+    return {
+      'image_url': imageUrl,
+      'text': cardText,
+    };
+  }
+
+  bool get _isFormValid {
+    // Check if ALL pairs of images and text are filled
+    for (int i = 0; i < 5; i++) {
+      if (_imageFiles[i] == null || _textControllers[i].text.isEmpty) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<CroppedFile?> _cropImage(String sourcePath) async {
+    return await ImageCropper().cropImage(
+      sourcePath: sourcePath,
+      compressQuality: 90,
+      compressFormat: ImageCompressFormat.jpg,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image',
+          toolbarColor: Colors.blue,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          title: 'Crop Image',
+          aspectRatioLockEnabled: false,
+        ),
+      ],
+    );
   }
 
   Future<void> _pickImage(int index) async {
@@ -38,9 +160,14 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
     );
 
     if (pickedImage != null) {
-      setState(() {
-        _imageFiles[index] = File(pickedImage.path);
-      });
+      // Crop the image
+      final croppedFile = await _cropImage(pickedImage.path);
+      
+      if (croppedFile != null) {
+        setState(() {
+          _imageFiles[index] = File(croppedFile.path);
+        });
+      }
     }
   }
 
@@ -55,17 +182,23 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
 
       final userId = user.id;
       final file = _imageFiles[index]!;
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(file.path)}';
+      final text = _textControllers[index].text.trim();
+      
+      // Include the text in the filename - format: timestamp_TEXT_originalname
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${text}_${path.basename(file.path)}';
       final filePath = '$userId/memory_card/$fileName';
 
-      await supabase.storage.from('memory_cards').upload(
+      await supabase.storage.from('cognitive_training').upload(
         filePath,
         file,
         fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
       );
 
       // Get the public URL for the uploaded image
-      final imageUrl = supabase.storage.from('memory_cards').getPublicUrl(filePath);
+      final imageUrl = await supabase.storage.from('cognitive_training').createSignedUrl(
+        filePath, 
+        60 * 60 * 24 * 365, // 365 days expiry
+      );
       
       return imageUrl;
     } catch (e) {
@@ -76,6 +209,62 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
     }
   }
 
+  // Future<void> _uploadImages() async {
+  //   if (!_isFormValid) return;
+
+  //   setState(() {
+  //     _isUploading = true;
+  //   });
+
+  //   try {
+  //     final uploadResults = <Map<String, String>>[];
+      
+  //     for (int i = 0; i < 5; i++) {
+  //       final imageUrl = await _uploadImage(i);
+  //       if (imageUrl != null) {
+  //         uploadResults.add({
+  //           'image_url': imageUrl,
+  //           'text': _textControllers[i].text,
+  //         });
+  //       }
+  //     }
+
+  //     // Here you would send the results to your Node.js API
+  //     // Example: await ApiService().uploadMemoryCardData(uploadResults);
+      
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Images uploaded successfully!')),
+  //     );
+      
+  //     // Clear the form
+  //     setState(() {
+  //       for (int i = 0; i < 5; i++) {
+  //         _textControllers[i].clear();
+  //         _imageFiles[i] = null;
+  //       }
+  //     });
+
+  //     if (context.mounted) {
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (context) => MemoryCardGamePage(cardData: uploadResults),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error uploading images: $e')),
+  //     );
+  //   } finally {
+  //     setState(() {
+  //       _isUploading = false;
+  //     });
+  //   }
+  // }
+
+  //new here
+  // Method to upload all images and send to API
   Future<void> _uploadImages() async {
     if (!_isFormValid) return;
 
@@ -85,23 +274,80 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
 
     try {
       final uploadResults = <Map<String, String>>[];
+      final apiResults = <Map<String, dynamic>>[];
       
+      // Get current user ID
+      final user = supabase.auth.currentUser;
+      if (user == null) throw 'User not authenticated';
+      final userId = user.id;
+      
+      // First, upload all images to Supabase
       for (int i = 0; i < 5; i++) {
         final imageUrl = await _uploadImage(i);
         if (imageUrl != null) {
+          // Add to results for the game
           uploadResults.add({
             'image_url': imageUrl,
             'text': _textControllers[i].text,
           });
+          
+          // Prepare data for API in the required format
+          apiResults.add({
+            'cognitive_training_id': 3,
+            'card_text': _textControllers[i].text,
+            'image_url': imageUrl,
+            'user_id': userId,
+          });
         }
       }
-
-      // Here you would send the results to your Node.js API
-      // Example: await ApiService().uploadMemoryCardData(uploadResults);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Images uploaded successfully!')),
-      );
+      //check if all images were uploaded successfully
+      if (uploadResults.length != 5) {
+        throw Exception('Some images failed to upload');
+      }
+
+      // Then, send the data to the API
+      try {
+        final apiService = MemoryCardUploadApiService();
+        final success = await apiService.uploadMemoryCardData(apiResults);
+        
+        if (!success) {
+          throw Exception('Failed to save card data to database');
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(
+              content: Text('Images uploaded and saved successfully!'),
+              backgroundColor: Colors.green,
+              duration:  Duration(seconds: 5),
+            ),
+        );
+      } catch (apiError) {
+        // If API call fails, but images are uploaded, show specific error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Images uploaded, but failed to save to database: $apiError'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        
+        // Show retry dialog
+        if (context.mounted) {
+          _retryDatabaseSave(apiResults);
+        }
+        
+        // Still proceed to game since images are available
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MemoryCardGamePage(cardData: uploadResults),
+            ),
+          );
+        }
+        return;
+      }
       
       // Clear the form
       setState(() {
@@ -110,15 +356,90 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
           _imageFiles[i] = null;
         }
       });
+
+      // Navigate to the game page
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MemoryCardGamePage(cardData: uploadResults),
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading images: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading images: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
+  }
+
+
+  Future<void> _retryDatabaseSave(List<Map<String, dynamic>> apiData) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Retry Saving to Database?'),
+        content: const Text(
+          'Your images were uploaded to storage but failed to save to the database. '
+          'Would you like to retry saving to the database?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Skip'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              setState(() {
+                _isUploading = true;
+              });
+              
+              try {
+                final apiService = MemoryCardUploadApiService();
+                final success = await apiService.uploadMemoryCardData(apiData);
+                
+                if (!success) {
+                  throw Exception('Failed to save card data to database');
+                }
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Card data saved to database successfully!')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to save to database: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              } finally {
+                setState(() {
+                  _isUploading = false;
+                });
+              }
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -131,10 +452,39 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
 
   @override
   Widget build(BuildContext context) {
+    if(_isLoading){
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Memory Card'),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+        ),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blue[100]!, Colors.blue[50]!],
+            ),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Checking for existing images...'),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Memory Card'),
         centerTitle: true,
+        backgroundColor: Colors.white,
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 8.0),
@@ -160,7 +510,7 @@ class _MemoryCardPageState extends State<MemoryCardPage> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: Color.fromARGB(255, 13, 72, 161),
                 ),
                 textAlign: TextAlign.center,
               ),
