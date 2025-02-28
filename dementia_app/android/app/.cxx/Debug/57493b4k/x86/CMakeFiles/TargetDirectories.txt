@@ -1,0 +1,2 @@
+C:/Users/vidur/Documents/GitHub/dementia-mobile-app/dementia_app/android/app/.cxx/Debug/57493b4k/x86/CMakeFiles/edit_cache.dir
+C:/Users/vidur/Documents/GitHub/dementia-mobile-app/dementia_app/android/app/.cxx/Debug/57493b4k/x86/CMakeFiles/rebuild_cache.dir
