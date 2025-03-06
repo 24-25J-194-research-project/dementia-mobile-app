@@ -1,3 +1,4 @@
+import 'package:dementia_app/core/logging/logger.dart';
 import 'package:dementia_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:flutter/material.dart';
 import 'login.dart';
@@ -58,8 +59,7 @@ class _SignUpPageState extends State<SignUpPage> {
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => LoginPage()));
     } catch (e) {
-      // Handle errors
-      print("Error signing up: $e");
+      logger.e('Sign up failed: $e');
     }
   }
 
