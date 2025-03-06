@@ -1,3 +1,4 @@
+import 'package:dementia_app/core/logging/logger.dart';
 import 'package:dementia_app/features/auth/domain/entities/user_model.dart';
 import 'package:dementia_app/features/auth/presentation/providers/auth_service.dart';
 import 'package:dementia_app/features/home/presentation/screens/home_screen.dart';
@@ -26,7 +27,7 @@ class LoginPage extends StatelessWidget {
         return const HomeScreen();
       }));
     } catch (e) {
-      print("Error logging in: $e");
+      logger.e('Login failed: $e');
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
               'Login failed. Please check your credentials and try again.')));

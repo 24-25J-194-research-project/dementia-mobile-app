@@ -1,3 +1,4 @@
+import 'package:dementia_app/core/logging/logger.dart';
 import 'package:dementia_app/features/auth/domain/entities/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -52,5 +53,19 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     User? user = _firebaseAuth.currentUser;
     return user != null;
+  }
+
+  Future<String?> getFreshIdToken() async {
+    try {
+      User? user = _firebaseAuth.currentUser;
+      if (user != null) {
+        String? idToken = await user.getIdToken(true);
+        return idToken;
+      }
+      return null;
+    } catch (e) {
+      logger.e('Error getting fresh ID token: $e');
+      return null;
+    }
   }
 }
