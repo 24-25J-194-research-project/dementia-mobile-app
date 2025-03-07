@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_service.dart';
 import '../widgets/drawer_menu.dart';
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,7 +9,6 @@ class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() => HomeScreenState();
 }
-
 
 class HomeScreenState extends State<HomeScreen> {
   String userName = "Loading...";
@@ -58,10 +57,10 @@ class HomeScreenState extends State<HomeScreen> {
         iconTheme: const IconThemeData(size: 36, color: Colors.black),
       ),
       drawer: const DrawerMenu(),
-      body: const Center(
+      body: Center(
         child: Text(
-          'Welcome to Memory Bloom!',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          AppLocalizations.of(context)!.hello,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),
     );

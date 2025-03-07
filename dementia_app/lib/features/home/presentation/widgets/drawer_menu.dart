@@ -1,6 +1,9 @@
 import 'package:dementia_app/features/auth/presentation/providers/auth_service.dart';
 import 'package:dementia_app/features/auth/presentation/screens/login.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/providers/locale_provider.dart';  // Import generated localization files
 
 class DrawerMenu extends StatefulWidget {
   const DrawerMenu({super.key});
@@ -38,6 +41,36 @@ class DrawerMenuState extends State<DrawerMenu> {
     }));
   }
 
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.choose_language),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: Text(AppLocalizations.of(context)!.english),
+                onTap: () {
+                  Provider.of<LocaleProvider>(context, listen: false).changeLocale(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text(AppLocalizations.of(context)!.sinhala),
+                onTap: () {
+                  Provider.of<LocaleProvider>(context, listen: false).changeLocale(const Locale('si'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -56,7 +89,7 @@ class DrawerMenuState extends State<DrawerMenu> {
                   backgroundImage: userPhotoUrl.isNotEmpty
                       ? NetworkImage(userPhotoUrl)
                       : const NetworkImage(
-                          'https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250'),
+                      'https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250'),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -92,6 +125,15 @@ class DrawerMenuState extends State<DrawerMenu> {
             leading: const Icon(Icons.logout),
             title: const Text('Log Out'),
             onTap: _logOut,
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(
+              AppLocalizations.of(context)!.selected_language,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            onTap: _showLanguageDialog,
           ),
         ],
       ),

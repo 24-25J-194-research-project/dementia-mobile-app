@@ -11,7 +11,6 @@ class LoginPage extends StatelessWidget {
 
   LoginPage({super.key});
 
-  // Function to handle login
   void login(BuildContext context) async {
     String email = emailController.text;
     String password = passwordController.text;
