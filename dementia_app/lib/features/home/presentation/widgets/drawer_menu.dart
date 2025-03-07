@@ -6,10 +6,10 @@ class DrawerMenu extends StatefulWidget {
   const DrawerMenu({super.key});
 
   @override
-  _DrawerMenuState createState() => _DrawerMenuState();
+  DrawerMenuState createState() => DrawerMenuState();
 }
 
-class _DrawerMenuState extends State<DrawerMenu> {
+class DrawerMenuState extends State<DrawerMenu> {
   String userName = "Loading...";
   String userEmail = "Loading...";
   String userPhotoUrl = "";
