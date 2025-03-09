@@ -5,6 +5,7 @@ class UserModel {
   String lastName;
   String dateOfBirth;
   String gender;
+  String? profilePicUrl;
 
   UserModel(
       {required this.uid,
@@ -12,7 +13,8 @@ class UserModel {
       required this.firstName,
       required this.lastName,
       required this.dateOfBirth,
-      required this.gender});
+      required this.gender,
+        this.profilePicUrl});
 
   Map<String, dynamic> toMap() {
     return {
@@ -22,6 +24,7 @@ class UserModel {
       'lastName': lastName,
       'dateOfBirth': dateOfBirth,
       'gender': gender,
+      'profilePicUrl': profilePicUrl,
     };
   }
 
@@ -33,11 +36,12 @@ class UserModel {
       lastName: map['lastName'],
       dateOfBirth: map['dateOfBirth'],
       gender: map['gender'],
+      profilePicUrl: map['profilePicUrl'],
     );
   }
 
   @override
   String toString() {
-    return 'UserModel(uid: $uid, email: $email, dateOfBirth: $dateOfBirth, gender: $gender)';
+    return 'UserModel(uid: $uid, email: $email, dateOfBirth: $dateOfBirth, gender: $gender, profilePicUrl: $profilePicUrl)';
   }
 }
