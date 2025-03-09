@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:dementia_app/features/auth/domain/entities/user_model.dart';
@@ -32,7 +31,6 @@ class ProfileScreenState extends State<ProfileScreen> {
     _loadUserProfile();
   }
 
-  // Load user profile from AuthService
   void _loadUserProfile() async {
     try {
       user = await _authService.getCurrentUser() ?? UserModel(
@@ -42,7 +40,7 @@ class ProfileScreenState extends State<ProfileScreen> {
         lastName: '',
         dateOfBirth: '',
         gender: '',
-        profilePicUrl: '',  // Default to empty string if no profile picture
+        profilePicUrl: '',
       );
       profilePicUrl = user.profilePicUrl ?? '';
       dateOfBirthController.text = user.dateOfBirth;
@@ -74,7 +72,6 @@ class ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Update user profile information
   Future<void> _updateUserProfile() async {
     try {
       await _profileUseCase.updateUserProfile(user);
@@ -85,7 +82,6 @@ class ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Select Date of Birth
   Future<void> _selectDateOfBirth(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -116,7 +112,6 @@ class ProfileScreenState extends State<ProfileScreen> {
             Stack(
               alignment: Alignment.bottomCenter,
               children: [
-                // The profile picture
                 ClipOval(
                   child: CircleAvatar(
                     radius: 50,
@@ -175,7 +170,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 icon: Icon(Icons.calendar_today),
               ),
               readOnly: true,
-              onTap: () => _selectDateOfBirth(context), // Show date picker
+              onTap: () => _selectDateOfBirth(context),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -196,7 +191,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 });
               },
             ),
-            const SizedBox(height: 20), // Gap between fields and button
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _updateUserProfile,
               child: const Text('Update Profile'),
