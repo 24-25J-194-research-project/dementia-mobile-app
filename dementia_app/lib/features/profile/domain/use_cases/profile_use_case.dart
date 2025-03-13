@@ -19,4 +19,16 @@ class ProfileUseCase {
   Future<String> updateProfilePicture(String uid, File imageFile) async {
     return await repository.updateProfilePicture(uid, imageFile);
   }
+
+  Future<void> saveUserEducation(String uid, List<Education> educationList) async {
+    await repository.saveUserEducation(uid, educationList);
+  }
+
+  Future<void> saveUserWorkExperience(String userId, List<WorkExperience> workExperienceList) async {
+    await repository.saveWorkExperience(userId, workExperienceList);
+  }
+
+  Future<void> saveUserFamilyMembers(String userId, List<FamilyMember> familyMembers) async {
+    await repository.saveUserFamilyMembers(userId, familyMembers);
+  }
 }

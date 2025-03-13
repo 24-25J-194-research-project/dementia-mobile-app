@@ -14,6 +14,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
     try {
       DocumentSnapshot snapshot = await _firestore.collection('users').doc(uid).get();
       if (snapshot.exists) {
+        print("User profile found.");
+        print(snapshot.data());
         return UserModel.fromMap(snapshot.data() as Map<String, dynamic>);
       }
       throw Exception("User profile not found.");
@@ -39,6 +41,39 @@ class ProfileRepositoryImpl implements ProfileRepository {
       final downloadUrl = await uploadTask.ref.getDownloadURL();
       await _firestore.collection('users').doc(uid).update({'profilePicUrl': downloadUrl});
       return downloadUrl;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> saveUserEducation(String uid, List<Education> educationList) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'educations': educationList.map((e) => e.toMap()).toList(),
+      });
+    } catch (e) {
+      throw Exception('Error saving education: $e');
+    }
+  }
+
+  @override
+  Future<void> saveWorkExperience(String userId, List<WorkExperience> workExperienceList) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'workExperiences': workExperienceList.map((e) => e.toMap()).toList(),
+      });
+    } catch (e) {
+      throw Exception('Error saving work experience: $e');
+    }
+  }
+
+  @override
+  Future<void> saveUserFamilyMembers(String userId, List<FamilyMember> familyMemberList) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'familyMembers': familyMemberList.map((e) => e.toMap()).toList(),
+      });
     } catch (e) {
       rethrow;
     }
