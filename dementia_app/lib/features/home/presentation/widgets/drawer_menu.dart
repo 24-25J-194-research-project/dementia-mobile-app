@@ -88,8 +88,7 @@ class DrawerMenuState extends State<DrawerMenu> {
                   radius: 30,
                   backgroundImage: userPhotoUrl.isNotEmpty
                       ? NetworkImage(userPhotoUrl)
-                      : const NetworkImage(
-                      'https://www.gravatar.com/avatar/2c7d99fe281ecd3bcd65ab915bac6dd5?s=250'),
+                      : const AssetImage('assets/images/default_profile_pic.png') as ImageProvider,
                 ),
                 const SizedBox(height: 10),
                 Text(

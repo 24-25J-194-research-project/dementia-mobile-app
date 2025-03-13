@@ -35,6 +35,7 @@ class AuthRepositoryImpl implements AuthRepository {
       lastName: lastName,
       dateOfBirth: dob,
       gender: gender,
+      profilePicUrl: '',
     );
 
     // Save user data to Firestore
