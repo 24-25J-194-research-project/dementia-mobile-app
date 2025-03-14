@@ -62,14 +62,20 @@ class _MatchingArtistActivityPageState
         }
       }
       
-      // Create artist objects with image URLs
+      // Create artist objects with multiple possible image formats
       _artists = artistFolders.map((folderName) {
         String artistName = folderName.replaceAll('_', ' ');
-        String imageUrl = 'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpg';
+        
+        // Create a list of possible image URLs with different extensions
+        List<String> possibleImageUrls = [
+          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpg',
+          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpeg',
+          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.png',
+        ];
         
         return {
           'name': artistName,
-          'image': imageUrl,
+          'imageUrls': possibleImageUrls,
           'folder': folderName,
         };
       }).toList();

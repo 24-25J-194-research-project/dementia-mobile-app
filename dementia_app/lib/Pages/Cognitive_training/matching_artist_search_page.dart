@@ -107,7 +107,7 @@ class _MatchingArtistSearchPageState extends State<MatchingArtistSearchPage> {
             colors: [Colors.blue[100]!, Colors.blue[50]!],
           ),
         ),
-        child: Column(
+                    child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -143,59 +143,93 @@ class _MatchingArtistSearchPageState extends State<MatchingArtistSearchPage> {
                 ],
               ),
             ),
-            Expanded(
-              child: _filteredSongs.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No songs found',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            
+            // Loading indicator or error message
+            if (_isLoading)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_errorMessage.isNotEmpty)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage,
+                        style: const TextStyle(fontSize: 16),
+                        textAlign: TextAlign.center,
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredSongs.length,
-                      itemBuilder: (context, index) {
-                        final song = _filteredSongs[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 8.0),
-                          child: Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 10.0),
-                              leading: const CircleAvatar(
-                                backgroundColor: Colors.blue,
-                                child: Icon(Icons.music_note, color: Colors.white),
-                              ),
-                              title: Text(
-                                song['title'],
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                'Artist: ${song['artist']}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.grey),
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => MatchingArtistActivityPage(
-                                      song: song,
-                                    ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadSongs,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: _filteredSongs.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No songs found',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _loadSongs,
+                        child: ListView.builder(
+                          itemCount: _filteredSongs.length,
+                          itemBuilder: (context, index) {
+                            final song = _filteredSongs[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 8.0),
+                              child: Card(
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0, vertical: 10.0),
+                                  leading: const CircleAvatar(
+                                    backgroundColor: Colors.blue,
+                                    child: Icon(Icons.music_note, color: Colors.white),
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
+                                  title: Text(
+                                    song['title'],
+                                    style: const TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Text(
+                                    'MP3 File',
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MatchingArtistActivityPage(
+                                          song: song,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+              ),
           ],
         ),
       ),

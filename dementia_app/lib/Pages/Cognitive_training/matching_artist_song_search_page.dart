@@ -24,6 +24,7 @@ class _MatchingArtistSongSearchPageState
   bool _isLoading = true;
   String _errorMessage = '';
   Set<String> _favorites = {};
+  bool _showOnlyFavorites = false;
 
   @override
   void initState() {
