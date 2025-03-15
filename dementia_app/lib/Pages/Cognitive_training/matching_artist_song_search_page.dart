@@ -35,24 +35,62 @@ class _MatchingArtistSongSearchPageState
 
   Future<void> _loadFavorites() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final favorites = prefs.getStringList('favorites') ?? [];
-      setState(() {
-        _favorites = Set.from(favorites);
-      });
+      // Get current user ID
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        debugPrint('User not logged in');
+        return;
+      }
+      
+      // Get favorites from Supabase database
+      final response = await supabase
+          .from('favorites')
+          .select('song_id')
+          .eq('user_id', userId);
+      
+      if (response != null) {
+        setState(() {
+          _favorites = Set.from(response.map((item) => item['song_id'] as String));
+        });
+      }
     } catch (e) {
       // Handle error silently
       debugPrint('Error loading favorites: $e');
     }
   }
 
-  Future<void> _saveFavorites() async {
+  Future<void> _saveFavorite(String songId, bool isFavorite) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('favorites', _favorites.toList());
+      // Get current user ID
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        debugPrint('User not logged in');
+        return;
+      }
+      
+      if (isFavorite) {
+        // Add to favorites in database
+        await supabase.from('favorites').insert({
+          'user_id': userId,
+          'song_id': songId,
+          'artist_id': widget.artist['id'],
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      } else {
+        // Remove from favorites in database
+        await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', userId)
+            .eq('song_id', songId);
+      }
     } catch (e) {
       // Handle error silently
-      debugPrint('Error saving favorites: $e');
+      debugPrint('Error saving favorite: $e');
     }
   }
 

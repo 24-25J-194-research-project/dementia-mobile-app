@@ -115,11 +115,17 @@ class _MatchingArtistActivityPageState
         // Replace the first element with the correct artist
         _shuffledArtists[0] = _artists[correctArtistInList];
       } else {
-        // If not found in our list, create a custom entry with default image
+        // If not found in our list, create a custom entry with multiple possible image formats
         final artistFolder = correctArtistName.replaceAll(' ', '_');
+        List<String> possibleImageUrls = [
+          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpg',
+          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpeg',
+          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.png',
+        ];
+        
         _shuffledArtists[0] = {
           'name': correctArtistName,
-          'image': 'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpg',
+          'imageUrls': possibleImageUrls,
           'folder': artistFolder,
         };
       }

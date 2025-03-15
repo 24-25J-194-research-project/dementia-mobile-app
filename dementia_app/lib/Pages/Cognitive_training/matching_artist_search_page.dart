@@ -85,6 +85,17 @@ class _MatchingArtistSearchPageState extends State<MatchingArtistSearchPage> {
       }
     });
   }
+  
+  // Create a simple random artist name for demo purposes
+  String _getRandomArtistName() {
+    final List<String> artists = [
+      'Michael Jackson', 'Queen', 'Guns N\' Roses', 
+      'Madonna', 'John Lennon', 'Elvis Presley',
+      'Beyoncé', 'Taylor Swift', 'Ed Sheeran',
+      'Adele', 'Justin Bieber', 'Ariana Grande'
+    ];
+    return artists[DateTime.now().millisecond % artists.length];
+  }
 
   @override
   Widget build(BuildContext context) {
