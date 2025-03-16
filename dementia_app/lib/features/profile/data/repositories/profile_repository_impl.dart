@@ -14,8 +14,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     try {
       DocumentSnapshot snapshot = await _firestore.collection('users').doc(uid).get();
       if (snapshot.exists) {
-        print("User profile found.");
-        print(snapshot.data());
         return UserModel.fromMap(snapshot.data() as Map<String, dynamic>);
       }
       throw Exception("User profile not found.");

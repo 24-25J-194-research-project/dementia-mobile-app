@@ -107,6 +107,13 @@ class DrawerMenuState extends State<DrawerMenu> {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.photo_album),
+            title: const Text('Memories'),
+            onTap: () {
+              Navigator.pushNamed(context, '/memories');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.account_circle),
             title: const Text('Profile'),
             onTap: () {

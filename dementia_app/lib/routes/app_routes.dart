@@ -3,6 +3,7 @@
 import 'package:dementia_app/features/auth/presentation/screens/login.dart';
 import 'package:dementia_app/features/auth/presentation/screens/signup.dart';
 import 'package:dementia_app/features/home/presentation/screens/home_screen.dart';
+import 'package:dementia_app/features/memories/presentation/screens/memory_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../features/profile/presentation/screens/profile_screen.dart';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const String signUp = '/signup';
   static const String login = '/login';
   static const String profile = '/profile';
+  static const String memories = '/memories';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -23,6 +25,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => LoginPage());
       case profile:
         return MaterialPageRoute(builder: (_) => const ProfileScreen());
+      case memories:
+        return MaterialPageRoute(builder: (_) => const MemoryScreen());
       default:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
     }
