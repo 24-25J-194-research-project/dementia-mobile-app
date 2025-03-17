@@ -62,25 +62,19 @@ class _MatchingArtistActivityPageState
         }
       }
       
-      // Create artist objects with multiple possible image formats
+      // Create artist objects with image URLs
       _artists = artistFolders.map((folderName) {
         String artistName = folderName.replaceAll('_', ' ');
-        
-        // Create a list of possible image URLs with different extensions
-        List<String> possibleImageUrls = [
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpg',
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpeg',
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.png',
-        ];
+        String imageUrl = 'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpg';
         
         return {
           'name': artistName,
-          'imageUrls': possibleImageUrls,
+          'image': imageUrl,
           'folder': folderName,
         };
       }).toList();
       
-      // Now shuffle and make sure correct artist is included
+      //shuffle and make sure correct artist is included
       _shuffleArtists();
       setState(() {
         _isLoading = false;
@@ -94,20 +88,20 @@ class _MatchingArtistActivityPageState
   }
 
   void _shuffleArtists() {
-    // Create a copy of the artists list and shuffle it
+    //create a copy of the artists list and shuffle it
     _shuffledArtists = List.from(_artists);
     _shuffledArtists.shuffle();
     
-    // Get the current song's artist
+    //get the current song's artist
     final correctArtistName = widget.song['artist'];
     
-    // Check if the correct artist is in our list
+    //check if the correct artist is in our list
     final correctArtistIndex = _shuffledArtists.indexWhere(
         (artist) => artist['name'] == correctArtistName);
     
-    // If the correct artist is not in the first 5 or not found, replace one with the correct artist
+    //if the correct artist is not in the first 5 or not found, replace one with the correct artist
     if (correctArtistIndex >= 5 || correctArtistIndex == -1) {
-      // Find the correct artist in our full list
+      //find the correct artist in our full list
       final correctArtistInList = _artists.indexWhere(
           (artist) => artist['name'] == correctArtistName);
       
@@ -115,17 +109,11 @@ class _MatchingArtistActivityPageState
         // Replace the first element with the correct artist
         _shuffledArtists[0] = _artists[correctArtistInList];
       } else {
-        // If not found in our list, create a custom entry with multiple possible image formats
+        // If not found in our list, create a custom entry with default image
         final artistFolder = correctArtistName.replaceAll(' ', '_');
-        List<String> possibleImageUrls = [
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpg',
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpeg',
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.png',
-        ];
-        
         _shuffledArtists[0] = {
           'name': correctArtistName,
-          'imageUrls': possibleImageUrls,
+          'image': 'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpg',
           'folder': artistFolder,
         };
       }
@@ -180,6 +168,62 @@ class _MatchingArtistActivityPageState
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$minutes:$seconds';
   }
+  
+  void _resetActivity() {
+    setState(() {
+      _isAnswered = false;
+      _selectedArtist = '';
+      _position = Duration.zero;
+      _audioPlayer.seek(Duration.zero);
+      _audioPlayer.pause();
+      _isPlaying = false;
+    });
+    _shuffleArtists();
+  }
+  
+  void _showResultDialog(bool isCorrect) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            isCorrect ? 'Correct!' : 'Incorrect!',
+            style: TextStyle(
+              color: isCorrect ? Colors.green : const Color.fromARGB(255, 255, 106, 95),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: isCorrect
+              ? const Text('You selected the right artist. Well done!')
+              : Text('The correct artist is ${widget.song['artist']}.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                _resetActivity(); // Reset the activity
+              },
+              child: const Text('Try Again'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(); // Go back to song search page
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isCorrect ? Colors.green : const Color.fromARGB(255, 255, 106, 95),
+                foregroundColor: Colors.white,
+              ),
+              child: Text(isCorrect ? 'OK' : 'Try Another'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _checkAnswer(String selectedArtist) {
     setState(() {
@@ -195,30 +239,9 @@ class _MatchingArtistActivityPageState
       HapticFeedback.vibrate();
     }
 
-    // Show result for a moment, then reset
-    Future.delayed(const Duration(seconds: 2), () {
-      if (_isCorrect) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Correct! Well done!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Incorrect. The correct artist is ${widget.song['artist']}.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      
-      // Reset the state for the next question
-      setState(() {
-        _isAnswered = false;
-        _selectedArtist = '';
-      });
+    // Show result with a small delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _showResultDialog(_isCorrect);
     });
   }
 
@@ -241,7 +264,7 @@ class _MatchingArtistActivityPageState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.purple[100]!, Colors.purple[50]!],
+            colors: [Colors.blue[100]!, Colors.blue[50]!],
           ),
         ),
         child: _isLoading
@@ -265,7 +288,7 @@ class _MatchingArtistActivityPageState
                               icon: Icon(
                                 _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
                                 size: 60,
-                                color: Colors.purple,
+                                color: Colors.blue,
                               ),
                               onPressed: _playPause,
                             ),
@@ -280,7 +303,7 @@ class _MatchingArtistActivityPageState
                                 final position = Duration(seconds: value.toInt());
                                 _audioPlayer.seek(position);
                               },
-                              activeColor: Colors.purple,
+                              activeColor: Colors.blue,
                             ),
                             
                             // Duration Display
@@ -358,8 +381,31 @@ class _MatchingArtistActivityPageState
                                       padding: const EdgeInsets.all(8.0),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(10),
-                                        child: _MultiFormatImageLoader(
-                                          imageUrls: artist['imageUrls'],
+                                        child: Image.network(
+                                          artist['image'],
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            // Use a placeholder if image fails to load
+                                            return Container(
+                                              color: Colors.grey[300],
+                                              child: const Icon(
+                                                Icons.person,
+                                                size: 50,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress.expectedTotalBytes != null
+                                                    ? loadingProgress.cumulativeBytesLoaded /
+                                                        loadingProgress.expectedTotalBytes!
+                                                    : null,
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     ),

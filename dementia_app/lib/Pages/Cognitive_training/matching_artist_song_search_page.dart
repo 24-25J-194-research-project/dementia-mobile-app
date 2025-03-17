@@ -50,11 +50,9 @@ class _MatchingArtistSongSearchPageState
           .select('song_id')
           .eq('user_id', userId);
       
-      if (response != null) {
-        setState(() {
-          _favorites = Set.from(response.map((item) => item['song_id'] as String));
-        });
-      }
+      setState(() {
+        _favorites = Set.from(response.map((item) => item['song_id'] as String));
+      });
     } catch (e) {
       // Handle error silently
       debugPrint('Error loading favorites: $e');
@@ -215,18 +213,34 @@ class _MatchingArtistSongSearchPageState
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search songs...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search songs...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      onChanged: _filterSongs,
+                    ),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                onChanged: _filterSongs,
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: Icon(
+                      _showOnlyFavorites ? Icons.favorite : Icons.favorite_border,
+                      color: _showOnlyFavorites ? Colors.red : Colors.grey,
+                      size: 30,
+                    ),
+                    onPressed: _toggleFavoritesFilter,
+                    tooltip: _showOnlyFavorites ? 'Show all songs' : 'Show favorites only',
+                  ),
+                ],
               ),
             ),
 
