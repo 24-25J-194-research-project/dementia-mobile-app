@@ -1,4 +1,4 @@
-import '../../Models/Cognitive_Training/cash_tally_models.dart';
+import '../../Components/Models/Cognitive_Training/cash_tally_models.dart';
 
 class CashTallyDataHard {
   // Define money notes

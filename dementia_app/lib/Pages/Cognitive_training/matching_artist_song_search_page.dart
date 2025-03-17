@@ -141,28 +141,52 @@ class _MatchingArtistSongSearchPageState
 
   void _filterSongs(String query) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredSongs = List.from(_songs);
-      } else {
-        _filteredSongs = _songs
+      var filteredList = _songs;
+      
+      // First filter by favorites if needed
+      if (_showOnlyFavorites) {
+        filteredList = filteredList
+            .where((song) => _favorites.contains(song['id']))
+            .toList();
+      }
+      
+      // Then filter by search query
+      if (query.isNotEmpty) {
+        filteredList = filteredList
             .where((song) => song['title']
                 .toString()
                 .toLowerCase()
                 .contains(query.toLowerCase()))
             .toList();
       }
+      
+      _filteredSongs = filteredList;
     });
   }
 
   void _toggleFavorite(String songId) {
+    final isFavorite = !_favorites.contains(songId);
+    
     setState(() {
-      if (_favorites.contains(songId)) {
-        _favorites.remove(songId);
-      } else {
+      if (isFavorite) {
         _favorites.add(songId);
+      } else {
+        _favorites.remove(songId);
       }
+      
+      // Re-apply filters in case we're in favorites-only mode
+      _filterSongs(_searchController.text);
     });
-    _saveFavorites();
+    
+    _saveFavorite(songId, isFavorite);
+  }
+  
+  void _toggleFavoritesFilter() {
+    setState(() {
+      _showOnlyFavorites = !_showOnlyFavorites;
+      // Re-apply filters
+      _filterSongs(_searchController.text);
+    });
   }
 
   @override
