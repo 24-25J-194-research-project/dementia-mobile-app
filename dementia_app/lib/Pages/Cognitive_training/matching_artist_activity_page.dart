@@ -1,3 +1,5 @@
+import 'package:dementia_app/Shared/constants.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/services.dart';
@@ -65,7 +67,7 @@ class _MatchingArtistActivityPageState
       // Create artist objects with image URLs
       _artists = artistFolders.map((folderName) {
         String artistName = folderName.replaceAll('_', ' ');
-        String imageUrl = 'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpg';
+        String imageUrl = '${Constants.artistImageUrl}/$folderName.jpg';
         
         return {
           'name': artistName,
@@ -150,7 +152,9 @@ class _MatchingArtistActivityPageState
         });
       });
     } catch (e) {
-      print('Error initializing player: $e');
+      if (kDebugMode) {
+        print('Error initializing player: $e');
+      }
     }
   }
 

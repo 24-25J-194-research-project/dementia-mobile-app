@@ -41,19 +41,19 @@ Future<void> _checkExistingImages() async {
     final userId = user.id;
     final folderPath = '$userId/memory_card';
     
-    // Set a timeout for the storage request
+    //set a timeout for the storage request
     final storageResponse = await Future.any([
       supabase.storage.from('cognitive_training').list(path: folderPath),
       Future.delayed(const Duration(seconds: 3), () => throw 'timeout')
     ]);
     
-    // Fast path: continue to upload if not enough images
+    //continue to upload if not enough images
     if (storageResponse.length < 5) {
       setState(() => _isLoading = false);
       return;
     }
     
-    // Process image data in parallel
+    //process image data in parallel
     final futures = <Future<Map<String, String>>>[];
     
     for (int i = 0; i < 5; i++) {
@@ -62,7 +62,7 @@ Future<void> _checkExistingImages() async {
     
     final results = await Future.wait(futures);
     
-    // Navigate to the game
+    //navigate to the activity
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -72,7 +72,7 @@ Future<void> _checkExistingImages() async {
       );
     }
   } catch (e) {
-    // Continue to upload page on error
+    //continue to upload page on error
     if (mounted) {
       setState(() => _isLoading = false);
     }
@@ -83,14 +83,14 @@ Future<void> _checkExistingImages() async {
     final filePath = '$folderPath/${fileData.name}';
     final imageUrl = await supabase.storage.from('cognitive_training').createSignedUrl(
       filePath, 
-      60 * 60 * 24 * 30, // 30 days expiry
+      60 * 60 * 24 * 30, //30 days expiry
     );
     
-    // Get the actual text from the database instead of parsing filename
+    //get the actual text from the database instead of parsing filename
     final user = supabase.auth.currentUser;
     if (user == null) throw 'User not authenticated';
     
-    // Query the database to get the card_text that matches this image URL
+    //query the database to get the card_text that matches this image URL
     final response = await supabase
         .from('memory_card')
         .select('card_text')
@@ -98,20 +98,20 @@ Future<void> _checkExistingImages() async {
         .eq('image_url', imageUrl)
         .maybeSingle();
     
-    // If found in database, use that text, otherwise fallback to filename
+    //if found in database, use that text, otherwise fallback to filename
     String cardText;
     if (response != null && response['card_text'] != null) {
       cardText = response['card_text'];
     } else {
-      // Try to extract from filename as fallback
+      //try to extract from filename as fallback
       final fileName = path.basenameWithoutExtension(fileData.name);
-      // Try to find text part between first and second underscore
+      //try to find text part between first and second underscore
       final parts = fileName.split('_');
       if (parts.length >= 3) {
-        // The text should be the second part (index 1) if filename format is timestamp_text_remainder
+        //the text should be the second part (index 1) if filename format is timestamp_text_remainder
         cardText = parts[1];
       } else {
-        cardText = fileName; // Use whole filename if can't parse
+        cardText = fileName; //use whole filename if can't parse
       }
     }
     
@@ -122,7 +122,7 @@ Future<void> _checkExistingImages() async {
   }
 
   bool get _isFormValid {
-    // Check if ALL pairs of images and text are filled
+    //check if ALL pairs of images and text are filled
     for (int i = 0; i < 5; i++) {
       if (_imageFiles[i] == null || _textControllers[i].text.isEmpty) {
         return false;
@@ -160,7 +160,7 @@ Future<void> _checkExistingImages() async {
     );
 
     if (pickedImage != null) {
-      // Crop the image
+      //crop the image
       final croppedFile = await _cropImage(pickedImage.path);
       
       if (croppedFile != null) {
@@ -184,7 +184,7 @@ Future<void> _checkExistingImages() async {
       final file = _imageFiles[index]!;
       final text = _textControllers[index].text.trim();
       
-      // Include the text in the filename - format: timestamp_TEXT_originalname
+      //include the text in the filename - format: timestamp_TEXT_originalname
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${text}_${path.basename(file.path)}';
       final filePath = '$userId/memory_card/$fileName';
 
@@ -194,77 +194,23 @@ Future<void> _checkExistingImages() async {
         fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
       );
 
-      // Get the public URL for the uploaded image
+      //get the public URL for the uploaded image
       final imageUrl = await supabase.storage.from('cognitive_training').createSignedUrl(
         filePath, 
-        60 * 60 * 24 * 365, // 365 days expiry
+        60 * 60 * 24 * 365, //365 days expiry
       );
       
       return imageUrl;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading image: $e')),
+        const SnackBar(content: Text('Error uploading image')),
       );
       return null;
     }
   }
 
-  // Future<void> _uploadImages() async {
-  //   if (!_isFormValid) return;
-
-  //   setState(() {
-  //     _isUploading = true;
-  //   });
-
-  //   try {
-  //     final uploadResults = <Map<String, String>>[];
-      
-  //     for (int i = 0; i < 5; i++) {
-  //       final imageUrl = await _uploadImage(i);
-  //       if (imageUrl != null) {
-  //         uploadResults.add({
-  //           'image_url': imageUrl,
-  //           'text': _textControllers[i].text,
-  //         });
-  //       }
-  //     }
-
-  //     // Here you would send the results to your Node.js API
-  //     // Example: await ApiService().uploadMemoryCardData(uploadResults);
-      
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Images uploaded successfully!')),
-  //     );
-      
-  //     // Clear the form
-  //     setState(() {
-  //       for (int i = 0; i < 5; i++) {
-  //         _textControllers[i].clear();
-  //         _imageFiles[i] = null;
-  //       }
-  //     });
-
-  //     if (context.mounted) {
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(
-  //           builder: (context) => MemoryCardGamePage(cardData: uploadResults),
-  //         ),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Error uploading images: $e')),
-  //     );
-  //   } finally {
-  //     setState(() {
-  //       _isUploading = false;
-  //     });
-  //   }
-  // }
-
-  //new here
-  // Method to upload all images and send to API
+  
+  //method to upload all images and send to API
   Future<void> _uploadImages() async {
     if (!_isFormValid) return;
 
@@ -276,22 +222,22 @@ Future<void> _checkExistingImages() async {
       final uploadResults = <Map<String, String>>[];
       final apiResults = <Map<String, dynamic>>[];
       
-      // Get current user ID
+      //get current user ID
       final user = supabase.auth.currentUser;
       if (user == null) throw 'User not authenticated';
       final userId = user.id;
       
-      // First, upload all images to Supabase
+      //upload all images to Supabase
       for (int i = 0; i < 5; i++) {
         final imageUrl = await _uploadImage(i);
         if (imageUrl != null) {
-          // Add to results for the game
+          //add to results for the game
           uploadResults.add({
             'image_url': imageUrl,
             'text': _textControllers[i].text,
           });
           
-          // Prepare data for API in the required format
+          //prepare data for API in the required format
           apiResults.add({
             'cognitive_training_id': 3,
             'card_text': _textControllers[i].text,
@@ -306,7 +252,7 @@ Future<void> _checkExistingImages() async {
         throw Exception('Some images failed to upload');
       }
 
-      // Then, send the data to the API
+      //send the data to the API
       try {
         final apiService = MemoryCardUploadApiService();
         final success = await apiService.uploadMemoryCardData(apiResults);
@@ -325,19 +271,19 @@ Future<void> _checkExistingImages() async {
       } catch (apiError) {
         // If API call fails, but images are uploaded, show specific error
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Images uploaded, but failed to save to database: $apiError'),
+          const SnackBar(
+            content: Text('Images uploaded, but failed to save to database'),
             backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 5),
+            duration: Duration(seconds: 5),
           ),
         );
         
-        // Show retry dialog
+        //show retry dialog
         if (context.mounted) {
           _retryDatabaseSave(apiResults);
         }
         
-        // Still proceed to game since images are available
+        //still proceed to game since images are available
         if (context.mounted) {
           Navigator.pushReplacement(
             context,
@@ -349,7 +295,7 @@ Future<void> _checkExistingImages() async {
         return;
       }
       
-      // Clear the form
+      //clear the form
       setState(() {
         for (int i = 0; i < 5; i++) {
           _textControllers[i].clear();
@@ -357,7 +303,7 @@ Future<void> _checkExistingImages() async {
         }
       });
 
-      // Navigate to the game page
+      //navigate to the game page
       if (context.mounted) {
         Navigator.pushReplacement(
           context,
@@ -369,10 +315,10 @@ Future<void> _checkExistingImages() async {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error uploading images: $e'),
+          const SnackBar(
+            content: Text('Error uploading images'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: Duration(seconds: 4),
           ),
         );
       }
@@ -424,8 +370,8 @@ Future<void> _checkExistingImages() async {
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to save to database: $e'),
+                  const SnackBar(
+                    content: Text('Failed to save to database'),
                     backgroundColor: Colors.red,
                   ),
                 );

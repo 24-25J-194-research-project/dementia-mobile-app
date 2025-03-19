@@ -6,4 +6,5 @@ class Constants {
   static String get webClientID => dotenv.env['WEB_CLIENT_ID'] ?? '';
   static String get iosClientID => dotenv.env['IOS_CLIENT_ID'] ?? '';
   static String get baseAPIUrl => dotenv.env['API_BASE_URL'] ?? '';
+  static String get artistImageUrl => dotenv.env['SUPABASE_ARTISTS_IMAGE_PATH'] ?? '';
 }

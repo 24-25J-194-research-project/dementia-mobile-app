@@ -218,7 +218,7 @@ class _CashTallyPageState extends State<CashTallyPage> {
       }
       
       if (kDebugMode) {
-        debugPrint("Error sending results to API: $e");
+        debugPrint("Error sending results to API");
       }
     }
   }

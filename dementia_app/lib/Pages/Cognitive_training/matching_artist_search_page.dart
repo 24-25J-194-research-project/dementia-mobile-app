@@ -69,7 +69,7 @@ class _MatchingArtistSearchPageState extends State<MatchingArtistSearchPage> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error loading artists: $e';
+        _errorMessage = 'Error loading artists';
         _isLoading = false;
       });
     }
