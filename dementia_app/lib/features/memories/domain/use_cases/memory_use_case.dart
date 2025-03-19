@@ -18,6 +18,20 @@ class MemoryUseCase {
     await _repository.saveMemory(memory);
   }
 
+  // Get a memory by its ID
+  Future<Memory> getMemoryById(String memoryId) async {
+    Memory? memory = await _repository.getMemoryById(memoryId);
+    if (memory == null) {
+      throw Exception('Memory not found');
+    }
+    return memory;
+  }
+
+  // Get a memory by ids
+  Future<List<Memory>> getMemoryByIds(List<String> memoryIds) async {
+    return await _repository.getMemoriesByIds(memoryIds);
+  }
+
   // Upload media (e.g., images, videos)
   Future<String> uploadMedia(File file, String fileName) async {
     return await _repository.uploadMedia(file, fileName);

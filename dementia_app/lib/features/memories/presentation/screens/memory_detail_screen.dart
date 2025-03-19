@@ -97,7 +97,7 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
       await MemoryUseCase(MemoryRepository()).saveMemory(updatedMemory);
 
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Memory updated')));
-      Navigator.pushNamed(context, '/memories');
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving memory: $e')));
     }
@@ -182,16 +182,19 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                 );
               },
             ),
-            const SizedBox(height: 12),
-
-            // Save Memory Button
-            ElevatedButton(
-              onPressed: _saveMemory,
-              child: const Text('Save Memory'),
-            ),
+            const SizedBox(height: 60),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _saveMemory,
+        icon: const Icon(Icons.save),
+        label: const Text(
+          'Save Memory',
+          style: TextStyle(fontSize: 16),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      )
     );
   }
 }

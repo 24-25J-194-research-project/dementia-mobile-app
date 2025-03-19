@@ -11,7 +11,7 @@ class MemoryRepository implements IMemoryRepository {
 
   @override
   Future<void> saveMemory(Memory memory) async {
-    try {;
+    try {
       if (memory.id != null) {
         await _firestore.collection('memories').doc(memory.id).update(memory.toMap());
       } else {
@@ -34,6 +34,35 @@ class MemoryRepository implements IMemoryRepository {
           .toList();
     } catch (e) {
       throw Exception('Error fetching memories: $e');
+    }
+  }
+
+  @override
+  Future<Memory?> getMemoryById(String id) async {
+    try {
+      final docSnapshot = await _firestore.collection('memories').doc(id).get();
+      if (docSnapshot.exists) {
+        return Memory.fromMap(docSnapshot.data()!, id: docSnapshot.id);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      throw Exception('Error fetching memory by ID: $e');
+    }
+  }
+
+  @override
+  Future<List<Memory>> getMemoriesByIds(List<String> ids) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('memories')
+          .where(FieldPath.documentId, whereIn: ids)
+          .get();
+      return querySnapshot.docs
+          .map((doc) => Memory.fromMap(doc.data(), id: doc.id))
+          .toList();
+    } catch (e) {
+      throw Exception('Error fetching memories by IDs: $e');
     }
   }
 

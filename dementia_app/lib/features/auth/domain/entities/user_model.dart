@@ -225,7 +225,7 @@ class FamilyMember {
   String birthPlace;
   List<Education>? educations;
   List<WorkExperience>? workExperiences;
-  String? currentWorkStatus;
+  WorkStatus? currentWorkStatus;
   MaritalStatus? maritalStatus;
   String? spouse;
   List<String>? children;
@@ -259,10 +259,16 @@ class FamilyMember {
       workExperiences: map['workExperiences'] != null
           ? List<WorkExperience>.from(map['workExperiences'].map((x) => WorkExperience.fromMap(x)))
           : null,
-      currentWorkStatus: map['currentWorkStatus'],
+      currentWorkStatus: map['currentWorkStatus'] != null
+          ? WorkStatus.values.firstWhere(
+              (e) => e.toString().split('.').last == map['currentWorkStatus']?.split('.').last,
+          orElse: () => WorkStatus.unknown
+      ) : null,
       maritalStatus: map['maritalStatus'] != null
-          ? MaritalStatus.values.firstWhere((e) => e.toString() == 'MaritalStatus.' + map['maritalStatus'])
-          : null,
+          ? MaritalStatus.values.firstWhere(
+              (e) => e.toString().split('.').last == map['maritalStatus']?.split('.').last,
+          orElse: () => MaritalStatus.unknown
+      ) : null,
       spouse: map['spouse'],
       children: map['children'] != null ? List<String>.from(map['children']) : null,
       notes: map['notes'],
@@ -278,7 +284,7 @@ class FamilyMember {
       'birthPlace': birthPlace,
       'educations': educations?.map((e) => e.toMap()).toList(),
       'workExperiences': workExperiences?.map((e) => e.toMap()).toList(),
-      'currentWorkStatus': currentWorkStatus,
+      'currentWorkStatus': currentWorkStatus?.toString(),
       'maritalStatus': maritalStatus?.toString(),
       'spouse': spouse,
       'children': children,
