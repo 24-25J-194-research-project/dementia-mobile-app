@@ -6,7 +6,7 @@ import '../Pages/sign_in_page.dart';
 class AuthService {
   final supabase = Supabase.instance.client;
   
-  // Singleton pattern
+  //singleton pattern
   static final AuthService _instance = AuthService._internal();
   
   factory AuthService() => _instance;

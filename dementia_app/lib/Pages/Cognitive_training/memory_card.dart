@@ -472,20 +472,20 @@ class _MemoryCardGamePageState extends State<MemoryCardGamePage> {
                         ],
                       ),
                       
-                      // Score counter
-                      Row(
-                        children: [
-                          const Icon(Icons.stars, size: 18, color: Colors.amber),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$_score',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // // Score counter
+                      // Row(
+                      //   children: [
+                      //     const Icon(Icons.stars, size: 18, color: Colors.amber),
+                      //     const SizedBox(width: 6),
+                      //     Text(
+                      //       '$_score',
+                      //       style: const TextStyle(
+                      //         fontWeight: FontWeight.bold,
+                      //         fontSize: 14,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),
