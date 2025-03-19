@@ -137,7 +137,7 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
                     autoPlayInterval: const Duration(seconds: 5),
                     autoPlayAnimationDuration: const Duration(seconds: 2),
                     enlargeCenterPage: true,
-                    aspectRatio: 2.0,
+                    aspectRatio: 1.0,
                     viewportFraction: 1.0,
                     enableInfiniteScroll: currentStepData.mediaUrls.length > 1,
                   ),
