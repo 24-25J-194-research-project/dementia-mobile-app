@@ -26,6 +26,7 @@ const _$MediaTypeEnumMap = {
 };
 
 Memory _$MemoryFromJson(Map<String, dynamic> json) => Memory(
+      id: json['id'] as String?,
       patientId: json['patientId'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
@@ -46,6 +47,7 @@ Memory _$MemoryFromJson(Map<String, dynamic> json) => Memory(
     );
 
 Map<String, dynamic> _$MemoryToJson(Memory instance) => <String, dynamic>{
+      'id': instance.id,
       'patientId': instance.patientId,
       'title': instance.title,
       'description': instance.description,

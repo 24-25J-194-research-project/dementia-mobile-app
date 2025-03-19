@@ -123,7 +123,8 @@ FamilyMember _$FamilyMemberFromJson(Map<String, dynamic> json) => FamilyMember(
       workExperiences: (json['workExperiences'] as List<dynamic>?)
           ?.map((e) => WorkExperience.fromJson(e as Map<String, dynamic>))
           .toList(),
-      currentWorkStatus: json['currentWorkStatus'] as String?,
+      currentWorkStatus:
+          $enumDecodeNullable(_$WorkStatusEnumMap, json['currentWorkStatus']),
       maritalStatus:
           $enumDecodeNullable(_$MaritalStatusEnumMap, json['maritalStatus']),
       spouse: json['spouse'] as String?,
@@ -142,7 +143,7 @@ Map<String, dynamic> _$FamilyMemberToJson(FamilyMember instance) =>
       'birthPlace': instance.birthPlace,
       'educations': instance.educations,
       'workExperiences': instance.workExperiences,
-      'currentWorkStatus': instance.currentWorkStatus,
+      'currentWorkStatus': _$WorkStatusEnumMap[instance.currentWorkStatus],
       'maritalStatus': _$MaritalStatusEnumMap[instance.maritalStatus],
       'spouse': instance.spouse,
       'children': instance.children,

@@ -1,31 +1,45 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
+import '../../features/auth/presentation/providers/auth_service.dart';
+import 'firebase_base_url_service.dart';
+
 class MemoryVaultApiClient {
-  final String baseUrl = dotenv.env['MEMORY_VAULT_BACKEND_URL']!;
+  final AuthService _authService = AuthService();
+  final FirebaseBaseUrlService _firebaseBaseUrlService = FirebaseBaseUrlService();
+  String? _baseUrl;
 
-  Future<Map<String, dynamic>> get(String endpoint) async {
-    final response = await http.get(Uri.parse('$baseUrl$endpoint'));
-    return _processResponse(response);
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final token = await _authService.getFreshIdToken();
+    if (token != null) {
+      return {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
+    } else {
+      throw Exception('User is not authenticated');
+    }
   }
 
-  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body) async {
-    final response = await http.post(Uri.parse('$baseUrl$endpoint'),
-        body: json.encode(body),
-        headers: {'Content-Type': 'application/json'});
-    return _processResponse(response);
+  Future<String> getBaseUrl() async {
+    if (_baseUrl != null) {
+      return _baseUrl!;
+    } else {
+      try {
+        _baseUrl = await _firebaseBaseUrlService.fetchBaseUrl();
+        return _baseUrl!;
+      } catch (e) {
+        throw Exception('Failed to fetch base URL: $e');
+      }
+    }
   }
 
-  Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> body) async {
-    final response = await http.put(Uri.parse('$baseUrl$endpoint'),
-        body: json.encode(body),
-        headers: {'Content-Type': 'application/json'});
-    return _processResponse(response);
-  }
+  Future<Map<String, dynamic>> post(String endpoint, {Map<String, dynamic>? body}) async {
+    final headers = await _getAuthHeaders();
+    final baseUrl = await getBaseUrl();
 
-  Future<Map<String, dynamic>> delete(String endpoint) async {
-    final response = await http.delete(Uri.parse('$baseUrl$endpoint'));
+    final response = await http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      body: body != null ? json.encode(body) : null,
+      headers: headers,
+    );
     return _processResponse(response);
   }
 

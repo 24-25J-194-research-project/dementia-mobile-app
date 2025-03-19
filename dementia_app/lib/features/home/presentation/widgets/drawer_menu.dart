@@ -114,6 +114,13 @@ class DrawerMenuState extends State<DrawerMenu> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.play_circle),
+            title: const Text('Reminiscence Therapies'),
+            onTap: () {
+              Navigator.pushNamed(context, '/reminiscence-therapies');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.account_circle),
             title: const Text('Profile'),
             onTap: () {
