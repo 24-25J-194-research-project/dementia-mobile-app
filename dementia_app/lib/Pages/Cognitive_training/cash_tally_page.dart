@@ -1,4 +1,3 @@
-import 'package:dementia_app/Pages/Cognitive_training/cash_tally_results_page.dart';
 import 'package:dementia_app/Shared/constants.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -6,6 +5,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../Components/user_avatar.dart';
+import 'cash_tally_results_page.dart';
 import '../../Models/Cognitive_Training/cash_tally_models.dart';
 import '../../Data/Cognitive_Training/cash_tally_easy_questions.dart';
 import '../../Data/Cognitive_Training/cash_tally_medium_questions.dart';

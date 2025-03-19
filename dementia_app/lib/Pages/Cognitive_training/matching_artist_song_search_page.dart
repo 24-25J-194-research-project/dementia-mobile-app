@@ -4,11 +4,11 @@ import '../../Components/user_avatar.dart';
 import 'matching_artist_activity_page.dart';
 
 class MatchingArtistSongSearchPage extends StatefulWidget {
-  final Map<String, dynamic> artist;
+  final Map<String, dynamic>? artist; // Make artist optional
 
   const MatchingArtistSongSearchPage({
     super.key,
-    required this.artist,
+    this.artist, // Optional artist parameter
   });
 
   @override
@@ -24,18 +24,20 @@ class _MatchingArtistSongSearchPageState
   bool _isLoading = true;
   String _errorMessage = '';
   Set<String> _favorites = {};
-  bool _showOnlyFavorites = false;
+  bool _showingFavorites = false;
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+    
+    // Determine if we're showing favorites based on whether artist is null
+    _showingFavorites = widget.artist == null;
     _loadSongs();
   }
 
   Future<void> _loadFavorites() async {
     try {
-      // Get current user ID
       final supabase = Supabase.instance.client;
       final userId = supabase.auth.currentUser?.id;
       
@@ -44,7 +46,6 @@ class _MatchingArtistSongSearchPageState
         return;
       }
       
-      // Get favorites from Supabase database
       final response = await supabase
           .from('favorites')
           .select('song_id')
@@ -54,41 +55,7 @@ class _MatchingArtistSongSearchPageState
         _favorites = Set.from(response.map((item) => item['song_id'] as String));
       });
     } catch (e) {
-      // Handle error silently
       debugPrint('Error loading favorites: $e');
-    }
-  }
-
-  Future<void> _saveFavorite(String songId, bool isFavorite) async {
-    try {
-      // Get current user ID
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      
-      if (userId == null) {
-        debugPrint('User not logged in');
-        return;
-      }
-      
-      if (isFavorite) {
-        // Add to favorites in database
-        await supabase.from('favorites').insert({
-          'user_id': userId,
-          'song_id': songId,
-          'artist_id': widget.artist['id'],
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      } else {
-        // Remove from favorites in database
-        await supabase
-            .from('favorites')
-            .delete()
-            .eq('user_id', userId)
-            .eq('song_id', songId);
-      }
-    } catch (e) {
-      // Handle error silently
-      debugPrint('Error saving favorite: $e');
     }
   }
 
@@ -100,35 +67,46 @@ class _MatchingArtistSongSearchPageState
 
     try {
       final supabase = Supabase.instance.client;
-      // Get the artist folder path from the artist data
-      final artistPath = widget.artist['path'];
+      
+      // If showing favorites, load all favorite songs
+      if (_showingFavorites) {
+        await _loadAllFavoriteSongs();
+        return;
+      }
+      
+      // Otherwise, load songs for the specific artist
+      if (widget.artist != null) {
+        final artistPath = widget.artist!['path'];
+        final storageResponse = await supabase
+            .storage
+            .from('matching_artist_common_music')
+            .list(path: artistPath);
 
-      // List all files in the artist folder
-      final storageResponse = await supabase
-          .storage
-          .from('matching_artist_common_music')
-          .list(path: artistPath);
+        setState(() {
+          _songs = storageResponse
+              .where((file) => file.name.endsWith('.mp3'))
+              .map((file) {
+            String fileName = file.name;
+            String title = fileName.replaceAll('.mp3', '').replaceAll('_', ' ');
 
-      setState(() {
-        // Filter only MP3 files and map them to a usable format
-        _songs = storageResponse
-            .where((file) => file.name.endsWith('.mp3'))
-            .map((file) {
-          String fileName = file.name;
-          String title = fileName.replaceAll('.mp3', '').replaceAll('_', ' ');
+            return {
+              'id': fileName,
+              'title': title,
+              'url': '$artistPath/$fileName',
+              'fullPath': file.name,
+              'artist': widget.artist!['name'],
+            };
+          }).toList();
 
-          return {
-            'id': fileName,
-            'title': title,
-            'url': '$artistPath/$fileName',
-            'fullPath': file.name,
-            'artist': widget.artist['name'],
-          };
-        }).toList();
-
-        _filteredSongs = List.from(_songs);
-        _isLoading = false;
-      });
+          _filteredSongs = List.from(_songs);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No artist selected';
+        });
+      }
     } catch (e) {
       setState(() {
         _errorMessage = 'Error loading songs: $e';
@@ -136,62 +114,130 @@ class _MatchingArtistSongSearchPageState
       });
     }
   }
+  
+  Future<void> _loadAllFavoriteSongs() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        debugPrint('User not logged in');
+        return;
+      }
+      
+      // Get all favorite song details
+      final response = await supabase
+          .from('favorites')
+          .select('song_id, artist_id')
+          .eq('user_id', userId);
+      
+      // Convert response to song format
+      List<Map<String, dynamic>> favoriteSongs = [];
+      
+      for (var favorite in response) {
+        final songId = favorite['song_id'] as String;
+        final artistId = favorite['artist_id'] as String;
+        
+        // Get artist folder name from artistId
+        final artistName = artistId.replaceAll('_', ' ');
+        final title = songId.replaceAll('.mp3', '').replaceAll('_', ' ');
+        
+        favoriteSongs.add({
+          'id': songId,
+          'title': title,
+          'url': 'common_music_clips/$artistId/$songId',
+          'artist': artistName,
+        });
+      }
+      
+      setState(() {
+        _songs = favoriteSongs;
+        _filteredSongs = List.from(_songs);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading favorite songs: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   void _filterSongs(String query) {
     setState(() {
-      var filteredList = _songs;
-      
-      // First filter by favorites if needed
-      if (_showOnlyFavorites) {
-        filteredList = filteredList
-            .where((song) => _favorites.contains(song['id']))
-            .toList();
-      }
-      
-      // Then filter by search query
-      if (query.isNotEmpty) {
-        filteredList = filteredList
+      if (query.isEmpty) {
+        _filteredSongs = List.from(_songs);
+      } else {
+        _filteredSongs = _songs
             .where((song) => song['title']
                 .toString()
                 .toLowerCase()
                 .contains(query.toLowerCase()))
             .toList();
       }
-      
-      _filteredSongs = filteredList;
     });
   }
 
-  void _toggleFavorite(String songId) {
+  Future<void> _toggleFavorite(String songId, String artistId) async {
     final isFavorite = !_favorites.contains(songId);
     
-    setState(() {
-      if (isFavorite) {
-        _favorites.add(songId);
-      } else {
-        _favorites.remove(songId);
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId == null) {
+        debugPrint('User not logged in');
+        return;
       }
       
-      // Re-apply filters in case we're in favorites-only mode
-      _filterSongs(_searchController.text);
-    });
-    
-    _saveFavorite(songId, isFavorite);
-  }
-  
-  void _toggleFavoritesFilter() {
-    setState(() {
-      _showOnlyFavorites = !_showOnlyFavorites;
-      // Re-apply filters
-      _filterSongs(_searchController.text);
-    });
+      if (isFavorite) {
+        // Add to favorites
+        await supabase.from('favorites').insert({
+          'user_id': userId,
+          'song_id': songId,
+          'artist_id': artistId,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+        setState(() {
+          _favorites.add(songId);
+        });
+      } else {
+        // Remove from favorites
+        await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', userId)
+            .eq('song_id', songId);
+        setState(() {
+          _favorites.remove(songId);
+          
+          // If we're in favorites view, remove this song from the list
+          if (_showingFavorites) {
+            _filteredSongs.removeWhere((song) => song['id'] == songId);
+            _songs.removeWhere((song) => song['id'] == songId);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error toggling favorite: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating favorites: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.artist['name']} Songs'),
+        title: Text(_showingFavorites 
+            ? 'Favorite Songs' 
+            : widget.artist != null 
+                ? '${widget.artist!['name']} Songs' 
+                : 'Songs'),
         centerTitle: true,
         backgroundColor: Colors.white,
         actions: const [
@@ -206,45 +252,28 @@ class _MatchingArtistSongSearchPageState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.purple[100]!, Colors.purple[50]!],
+            colors: [Colors.blue[100]!, Colors.blue[50]!],
           ),
         ),
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search songs...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      onChanged: _filterSongs,
-                    ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search songs...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0),
                   ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: Icon(
-                      _showOnlyFavorites ? Icons.favorite : Icons.favorite_border,
-                      color: _showOnlyFavorites ? Colors.red : Colors.grey,
-                      size: 30,
-                    ),
-                    onPressed: _toggleFavoritesFilter,
-                    tooltip: _showOnlyFavorites ? 'Show all songs' : 'Show favorites only',
-                  ),
-                ],
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                onChanged: _filterSongs,
               ),
             ),
 
-            // Loading indicator or error message
             if (_isLoading)
               const Expanded(
                 child: Center(
@@ -276,20 +305,39 @@ class _MatchingArtistSongSearchPageState
             else
               Expanded(
                 child: _filteredSongs.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No songs found',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.music_off,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _showingFavorites
+                                  ? 'No favorite songs found'
+                                  : 'No songs found',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
                       )
                     : RefreshIndicator(
-                        onRefresh: _loadSongs,
+                        onRefresh: () async {
+                          await _loadFavorites();
+                          await _loadSongs();
+                        },
                         child: ListView.builder(
                           itemCount: _filteredSongs.length,
                           itemBuilder: (context, index) {
                             final song = _filteredSongs[index];
                             final isFavorite = _favorites.contains(song['id']);
+                            final artistId = widget.artist != null 
+                                ? widget.artist!['id'] 
+                                : song['url'].toString().split('/')[1]; // Extract from path
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(
@@ -314,7 +362,7 @@ class _MatchingArtistSongSearchPageState
                                         fontWeight: FontWeight.bold),
                                   ),
                                   subtitle: Text(
-                                    'Artist: ${widget.artist['name']}',
+                                    'Artist: ${song['artist']}',
                                     style: const TextStyle(
                                         fontSize: 14, color: Colors.grey),
                                   ),
@@ -326,8 +374,7 @@ class _MatchingArtistSongSearchPageState
                                       color:
                                           isFavorite ? Colors.red : Colors.grey,
                                     ),
-                                    onPressed: () =>
-                                        _toggleFavorite(song['id']),
+                                    onPressed: () => _toggleFavorite(song['id'], artistId),
                                   ),
                                   onTap: () {
                                     Navigator.push(

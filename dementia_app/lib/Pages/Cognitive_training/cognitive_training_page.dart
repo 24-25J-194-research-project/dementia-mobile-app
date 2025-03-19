@@ -1,7 +1,9 @@
+import 'package:dementia_app/Pages/Cognitive_training/matching_artist_search_page.dart';
 import 'package:flutter/material.dart';
+import 'package:dementia_app/Pages/Cognitive_training/cash_tally_page.dart';
 import 'package:dementia_app/Pages/Cognitive_training/memory_card_image_upload_page.dart';
-import '../../../Components/user_avatar.dart';
-import '../../../Components/Cognitive_Training/cognitive_training_button.dart';
+import '../../Components/user_avatar.dart';
+import '../../Components/Cognitive_Training/cognitive_training_button.dart';
 
 class CognitiveTrainingPage extends StatelessWidget {
   const CognitiveTrainingPage({super.key});
@@ -34,6 +36,13 @@ class CognitiveTrainingPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // TrainingButton(
+                //   icon: Icons.lightbulb_outline,
+                //   label: 'Introduction',
+                //   backgroundColor: Colors.white, 
+                //   foregroundColor: Colors.teal[600]!,
+                //   onPressed: () {},
+                // ),
                 const SizedBox(height: 20),
                 TrainingButton(
                   icon: Icons.calculate,
@@ -41,6 +50,12 @@ class CognitiveTrainingPage extends StatelessWidget {
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.blue,
                   onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CashTallyPage(),
+                        ),
+                      );
                     },
                   ),
                 const SizedBox(height: 20),
@@ -65,9 +80,22 @@ class CognitiveTrainingPage extends StatelessWidget {
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.blue,
                   onPressed: () {
-                    
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MatchingArtistSearchPage(),
+                      ),
+                    );
                   },
                 ),
+                // const SizedBox(height: 20),
+                // TrainingButton(
+                //   icon: Icons.settings,
+                //   label: 'Activity Settings',
+                //   backgroundColor: Colors.white,
+                //   foregroundColor: Colors.grey[700]!,
+                //   onPressed: () {},
+                // ),
               ],
             ),
           ),
