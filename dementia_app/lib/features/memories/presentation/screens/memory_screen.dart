@@ -99,8 +99,6 @@ class MemoryScreenState extends State<MemoryScreen> {
                       (e) => e.memoryId == memory.id,
                   orElse: () => TherapyOutline(memoryId: '', status: 'not processed', id: '', patientId: ''),
                 );
-                print(outline.status);
-
 
                 if (outline.status == 'not processed') {
                   return _buildStatus("Not processed yet.", Icons.pending, "Process Now", memory.id!);
@@ -110,8 +108,10 @@ class MemoryScreenState extends State<MemoryScreen> {
                       Icons.check_circle, "View Therapies", memory.id!);
                 } else if (outline.status == 'processing' || outline.status == 'pending') {
                   return _buildStatus("Memory is being processed...", Icons.autorenew, "Wait", memory.id!);
-                } else {
+                } else if (outline.status == 'failed') {
                   return _buildStatus("Memory processing failed. Please retry.", Icons.error, "Retry", memory.id!);
+                } else {
+                  return _buildStatus("Unknown status", Icons.error, "View", memory.id!);
                 }
               },
             ),
