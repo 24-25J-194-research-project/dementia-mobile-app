@@ -122,16 +122,9 @@ class DrawerMenuState extends State<DrawerMenu> {
           ),
           ListTile(
             leading: const Icon(Icons.account_circle),
-            title: const Text('Profile'),
+            title: const Text('Patient Profile'),
             onTap: () {
               Navigator.pushNamed(context, '/profile');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              Navigator.pushNamed(context, '/settings');
             },
           ),
           ListTile(
@@ -144,7 +137,7 @@ class DrawerMenuState extends State<DrawerMenu> {
             leading: const Icon(Icons.language),
             title: Text(
               AppLocalizations.of(context)!.selected_language,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             onTap: _showLanguageDialog,
           ),

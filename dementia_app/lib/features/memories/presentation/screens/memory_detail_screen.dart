@@ -113,67 +113,86 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Memory')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Memory Title
-            TextFormField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Memory Title'),
-            ),
-            const SizedBox(height: 12),
+      body: CustomScrollView(
+        slivers: [
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                // Memory Title
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Memory Title'),
+                  ),
+                ),
 
-            // Memory Description
-            TextFormField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: 'Memory Description'),
-            ),
-            const SizedBox(height: 12),
+                // Memory Description
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(labelText: 'Memory Description'),
+                  ),
+                ),
 
-            // Memory Date
-            TextFormField(
-              controller: dateController,
-              decoration: const InputDecoration(labelText: 'Memory Date'),
-              readOnly: true,
-              onTap: _selectDate,
-            ),
-            const SizedBox(height: 12),
+                // Memory Date
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: dateController,
+                    decoration: const InputDecoration(labelText: 'Memory Date'),
+                    readOnly: true,
+                    onTap: _selectDate,
+                  ),
+                ),
 
-            // Categories
-            Text(
-              'Categories: ${widget.memory.categories?.join(', ') ?? 'Not processed yet'}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
+                // Categories
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Categories: ${widget.memory.categories?.join(', ') ?? 'Not processed yet'}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
 
-            // Emotions
-            Text(
-              'Emotions: ${widget.memory.emotions?.join(', ') ?? 'Not processed yet'}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
+                // Emotions
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Emotions: ${widget.memory.emotions?.join(', ') ?? 'Not processed yet'}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(height: 8),
 
-            // Tags
-            Text(
-              'Tags: ${widget.memory.tags?.join(', ') ?? 'Not processed yet'}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
+                // Tags
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Tags: ${widget.memory.tags?.join(', ') ?? 'Not processed yet'}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
-            // Add Media Button
-            ElevatedButton(
-              onPressed: _addMedia,
-              child: const Text('Add Media'),
+                // Add Media Button
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: _addMedia,
+                    child: const Text('Add Media'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
             ),
-            const SizedBox(height: 12),
+          ),
 
-            // Media List
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: mediaList.length,
-              itemBuilder: (context, index) {
+          // Media List (Use SliverList for nested scrollable content)
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+                  (context, index) {
                 final media = mediaList[index];
                 return MediaCard(
                   media: media,
@@ -181,10 +200,10 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                   onEdit: (_) {}, // Media editing not supported here
                 );
               },
+              childCount: mediaList.length,
             ),
-            const SizedBox(height: 60),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saveMemory,
@@ -194,7 +213,7 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
           style: TextStyle(fontSize: 16),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      )
+      ),
     );
   }
 }

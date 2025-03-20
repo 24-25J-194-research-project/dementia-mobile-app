@@ -1,3 +1,4 @@
+import 'package:dementia_app/features/reminiscence_therapy/presentation/screens/therapy_feedback_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -132,10 +133,13 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
               if (currentStepData.mediaUrls.isNotEmpty) ...[
                 CarouselSlider(
                   options: CarouselOptions(
-                    autoPlay: true,
+                    autoPlay: currentStepData.mediaUrls.length > 1,
+                    autoPlayInterval: const Duration(seconds: 5),
+                    autoPlayAnimationDuration: const Duration(seconds: 2),
                     enlargeCenterPage: true,
-                    aspectRatio: 2.0,
+                    aspectRatio: 1.0,
                     viewportFraction: 1.0,
+                    enableInfiniteScroll: currentStepData.mediaUrls.length > 1,
                   ),
                   items: currentStepData.mediaUrls.map((mediaUrl) {
                     return Builder(
@@ -147,6 +151,7 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
                 ),
                 const SizedBox(height: 20),
               ],
+
 
               // Show Slider if totalDuration is available
               if (totalDuration != Duration.zero) ...[
@@ -209,7 +214,13 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
                   ElevatedButton(
                     onPressed: currentStepData.type == StepType.conclusion
                         ? () {
-                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TherapyFeedbackScreen(
+                            therapyOutline: therapyOutline,
+                        )),
+                      );
                     }
                         : _nextStep,
                     child: Text(currentStepData.type == StepType.conclusion

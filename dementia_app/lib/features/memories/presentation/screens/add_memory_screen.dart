@@ -103,38 +103,47 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Memory')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Memory Title'),
+      body: CustomScrollView(
+        slivers: [
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Memory Title'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(labelText: 'Memory Description'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: dateController,
+                    decoration: const InputDecoration(labelText: 'Memory Date'),
+                    readOnly: true,
+                    onTap: _selectDate,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: _addMedia,
+                    child: const Text('Add Media'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: 'Memory Description'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: dateController,
-              decoration: const InputDecoration(labelText: 'Memory Date'),
-              readOnly: true,
-              onTap: _selectDate,
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _addMedia,
-              child: const Text('Add Media'),
-            ),
-            const SizedBox(height: 12),
-
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: mediaList.length,
-              itemBuilder: (context, index) {
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+                  (context, index) {
                 final media = mediaList[index];
                 return MediaCard(
                   media: media,
@@ -142,10 +151,10 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
                   onEdit: _editMedia,
                 );
               },
+              childCount: mediaList.length,
             ),
-            const SizedBox(height: 60),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _saveMemory,
@@ -155,7 +164,7 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
           style: TextStyle(fontSize: 16),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      )
+      ),
     );
   }
 }
