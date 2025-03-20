@@ -61,7 +61,6 @@ class TherapyFeedbackScreenState extends State<TherapyFeedbackScreen> {
         comments: comments,
       );
 
-      // Use the use case to save feedback
       final useCase = TherapyFeedbackUseCase(TherapyFeedbackRepositoryImpl());
       await useCase.saveFeedback(feedback);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Feedback saved!')));
@@ -164,7 +163,7 @@ class TherapyFeedbackScreenState extends State<TherapyFeedbackScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     _submitFeedback(selectedEmotions, rating, commentController.text);
-                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/reminiscence-therapies');
                   },
                   child: const Text('Save'),
                 ),

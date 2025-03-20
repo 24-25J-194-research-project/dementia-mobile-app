@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/entities/therapy_feedback.dart';
 import '../../domain/repositories/therapy_feedback_repository.dart';
