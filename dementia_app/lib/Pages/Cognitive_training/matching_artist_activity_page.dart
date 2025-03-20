@@ -82,7 +82,9 @@ class _MatchingArtistActivityPageState
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading artists: $e');
+      if (kDebugMode) {
+        print('Error loading artists: $e');
+      }
       setState(() {
         _isLoading = false;
       });
