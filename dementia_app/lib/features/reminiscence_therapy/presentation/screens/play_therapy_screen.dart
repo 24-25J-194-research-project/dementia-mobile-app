@@ -1,6 +1,6 @@
 import 'package:dementia_app/features/reminiscence_therapy/presentation/screens/therapy_feedback_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../../memories/domain/entities/memory_model.dart';
 import '../../domain/entities/therapy_outline.dart';
@@ -9,7 +9,8 @@ class PlayTherapyScreen extends StatefulWidget {
   final TherapyOutline therapyOutline;
   final Memory memory;
 
-  const PlayTherapyScreen({super.key, required this.therapyOutline, required this.memory});
+  const PlayTherapyScreen(
+      {super.key, required this.therapyOutline, required this.memory});
 
   @override
   PlayTherapyScreenState createState() => PlayTherapyScreenState();
@@ -17,10 +18,9 @@ class PlayTherapyScreen extends StatefulWidget {
 
 class PlayTherapyScreenState extends State<PlayTherapyScreen> {
   late TherapyOutline therapyOutline;
-  late AudioPlayer audioPlayer;
+  late AudioPlayer _audioPlayer;
   late int currentStep;
   bool isAudioPlaying = false;
-  bool isSlideshowPlaying = false;
   Duration currentPosition = Duration.zero;
   Duration totalDuration = Duration.zero;
 
@@ -29,39 +29,53 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
     super.initState();
     therapyOutline = widget.therapyOutline;
     currentStep = 0;
-    audioPlayer = AudioPlayer();
+    _initAudioPlayer();
+  }
 
-    audioPlayer.onPositionChanged.listen((position) {
+  void _initAudioPlayer() {
+    _audioPlayer = AudioPlayer();
+
+    // Listen to player state changes
+    _audioPlayer.playerStateStream.listen((playerState) {
+      setState(() {
+        isAudioPlaying = playerState.playing;
+      });
+    });
+
+    // Listen to position changes
+    _audioPlayer.positionStream.listen((position) {
       setState(() {
         currentPosition = position;
       });
     });
 
-    audioPlayer.onDurationChanged.listen((duration) {
-      setState(() {
-        totalDuration = duration;
-      });
+    // Listen to duration changes
+    _audioPlayer.durationStream.listen((duration) {
+      if (duration != null) {
+        setState(() {
+          totalDuration = duration;
+        });
+      }
     });
   }
 
-  void _playAudio(String audioUrl) async {
+  Future<void> _playAudio(String audioUrl) async {
     if (audioUrl.isNotEmpty) {
-      await audioPlayer.play(UrlSource(audioUrl));
-      setState(() {
-        isAudioPlaying = true;
-      });
+      try {
+        await _audioPlayer.setUrl(audioUrl);
+        await _audioPlayer.play();
+      } catch (e) {
+        debugPrint('Error playing audio: $e');
+      }
     }
   }
 
-  void _pauseAudio() async {
-    await audioPlayer.pause();
-    setState(() {
-      isAudioPlaying = false;
-    });
+  Future<void> _pauseAudio() async {
+    await _audioPlayer.pause();
   }
 
-  void _seekAudio(Duration position) {
-    audioPlayer.seek(position);
+  Future<void> _seekAudio(Duration position) async {
+    await _audioPlayer.seek(position);
   }
 
   void _nextStep() {
@@ -85,10 +99,12 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
   void _resetPlayerForNextStep() {
     final step = therapyOutline.steps![currentStep];
     _playAudio(step.audioUrl ?? '');
-    setState(() {
-      currentPosition = Duration.zero;
-      isAudioPlaying = false;
-    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   @override
@@ -112,7 +128,8 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
               if (currentStep == 0) ...[
                 Text(
                   widget.memory.title,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -125,7 +142,8 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
               if (currentStepData.type == StepType.normal) ...[
                 Text(
                   currentStepData.description,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
               ],
@@ -152,17 +170,21 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
                 const SizedBox(height: 20),
               ],
 
-
               // Show Slider if totalDuration is available
               if (totalDuration != Duration.zero) ...[
-                Slider(
-                  value: currentPosition.inSeconds.toDouble(),
-                  min: 0,
-                  max: totalDuration.inSeconds.toDouble(),
-                  onChanged: (value) {
-                    _seekAudio(Duration(seconds: value.toInt()));
-                  },
-                ),
+                StreamBuilder<Duration>(
+                    stream: _audioPlayer.positionStream,
+                    builder: (context, snapshot) {
+                      final position = snapshot.data ?? Duration.zero;
+                      return Slider(
+                        value: position.inSeconds.toDouble(),
+                        min: 0,
+                        max: totalDuration.inSeconds.toDouble(),
+                        onChanged: (value) {
+                          _seekAudio(Duration(seconds: value.toInt()));
+                        },
+                      );
+                    }),
               ],
               const SizedBox(height: 20),
 
@@ -170,10 +192,15 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    _formatDuration(currentPosition),
-                    style: const TextStyle(fontSize: 14),
-                  ),
+                  StreamBuilder<Duration>(
+                      stream: _audioPlayer.positionStream,
+                      builder: (context, snapshot) {
+                        final position = snapshot.data ?? Duration.zero;
+                        return Text(
+                          _formatDuration(position),
+                          style: const TextStyle(fontSize: 14),
+                        );
+                      }),
                   Text(
                     _formatDuration(totalDuration),
                     style: const TextStyle(fontSize: 14),
@@ -195,33 +222,48 @@ class PlayTherapyScreenState extends State<PlayTherapyScreen> {
                   ],
 
                   // Large Play Button in the middle
-                  Center(
-                    child: GestureDetector(
-                      onTap: isAudioPlaying ? _pauseAudio : () => _playAudio(currentStepData.audioUrl!),
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.blue,
-                        child: Icon(
-                          isAudioPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 50,
-                        ),
-                      ),
-                    ),
-                  ),
+                  StreamBuilder<PlayerState>(
+                      stream: _audioPlayer.playerStateStream,
+                      builder: (context, snapshot) {
+                        final playerState = snapshot.data;
+                        final playing = playerState?.playing;
+
+                        return Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              if (playing == true) {
+                                _pauseAudio();
+                              } else {
+                                _playAudio(currentStepData.audioUrl!);
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.blue,
+                              child: Icon(
+                                playing == true
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: Colors.white,
+                                size: 50,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
 
                   // Next Button
                   ElevatedButton(
                     onPressed: currentStepData.type == StepType.conclusion
                         ? () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TherapyFeedbackScreen(
-                            therapyOutline: therapyOutline,
-                        )),
-                      );
-                    }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => TherapyFeedbackScreen(
+                                        therapyOutline: therapyOutline,
+                                      )),
+                            );
+                          }
                         : _nextStep,
                     child: Text(currentStepData.type == StepType.conclusion
                         ? 'Finish'
