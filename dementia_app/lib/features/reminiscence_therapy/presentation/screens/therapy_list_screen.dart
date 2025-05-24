@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 import '../../../auth/presentation/providers/auth_service.dart';
 import '../../../memories/data/repositories/memory_repository_impl.dart';
@@ -120,6 +121,15 @@ class ReminiscenceTherapiesScreenState
   }
 
   Widget _buildTherapyCard(TherapyOutline therapyOutline, Memory memory) {
+    // Collect all unique media URLs from therapy steps using a Set
+    Set<String> uniqueMediaUrls = {};
+    if (therapyOutline.steps != null) {
+      for (var step in therapyOutline.steps!) {
+        uniqueMediaUrls.addAll(step.mediaUrls);
+      }
+    }
+    final List<String> allMediaUrls = uniqueMediaUrls.toList();
+
     return Card(
       elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -138,6 +148,59 @@ class ReminiscenceTherapiesScreenState
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 8),
+            if (allMediaUrls.isNotEmpty) ...[
+              CarouselSlider(
+                options: CarouselOptions(
+                  height: 200.0,
+                  aspectRatio: 16/9,
+                  viewportFraction: 0.8,
+                  enableInfiniteScroll: false,
+                  autoPlay: false,
+                  enlargeCenterPage: true,
+                ),
+                items: allMediaUrls.map((url) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return Container(
+                        width: MediaQuery.of(context).size.width,
+                        margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 32,
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
