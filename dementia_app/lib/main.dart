@@ -1,6 +1,7 @@
 import 'package:dementia_app/features/auth/presentation/providers/auth_service.dart';
 import 'package:dementia_app/features/auth/presentation/screens/login.dart';
 import 'package:dementia_app/features/home/presentation/screens/home_screen.dart';
+import 'package:dementia_app/features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:dementia_app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,8 +26,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => LocaleProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+      ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, child) {
           return MaterialApp(
@@ -34,6 +38,11 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,
+              textTheme: Theme.of(context).textTheme.apply(
+                    bodyColor: Colors.black87,
+                    displayColor: Colors.black87,
+                    decoration: TextDecoration.none,
+                  ),
             ),
             locale: localeProvider.locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -50,10 +59,23 @@ class MyApp extends StatelessWidget {
 class AuthChecker extends StatelessWidget {
   const AuthChecker({super.key});
 
+  Future<bool> _initializeApp(BuildContext context) async {
+    final isLoggedIn = await AuthService().isLoggedIn();
+    if (isLoggedIn) {
+      final user = await AuthService().getCurrentUser();
+      if (user != null) {
+        // Load onboarding status before showing home screen
+        await Provider.of<OnboardingProvider>(context, listen: false)
+            .loadOnboardingStatus(user.uid);
+      }
+    }
+    return isLoggedIn;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: AuthService().isLoggedIn(),
+      future: _initializeApp(context),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(

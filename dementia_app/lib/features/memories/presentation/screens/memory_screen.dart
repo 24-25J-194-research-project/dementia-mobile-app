@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:dementia_app/features/memories/domain/entities/memory_model.dart';
 import 'package:dementia_app/features/reminiscence_therapy/domain/entities/therapy_outline.dart';
 import '../../../../core/network/memory_vault_api_client.dart';
 import '../../../auth/presentation/providers/auth_service.dart';
+import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../../onboarding/presentation/widgets/memories_tutorial_overlay.dart';
 import '../../../reminiscence_therapy/data/repositories/therapy_outline_repository_impl.dart';
 import '../../../reminiscence_therapy/domain/use_cases/therapy_outline_use_case.dart';
 import '../../data/repositories/memory_repository_impl.dart';
@@ -360,23 +363,75 @@ class MemoryScreenState extends State<MemoryScreen> {
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.photo_album_outlined,
+            size: 80,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No memories yet',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add your first memory by tapping the + button',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Memories')),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: memories.length,
-              itemBuilder: (context, index) {
-                final memory = memories[index];
-                return _buildMemoryCard(memory);
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addMemory,
-        child: const Icon(Icons.add),
-      ),
+    final onboardingProvider = Provider.of<OnboardingProvider>(context);
+    final onboardingStatus = onboardingProvider.onboardingStatus;
+    final bool showTutorial = onboardingStatus != null &&
+        onboardingStatus.isPhaseOneComplete &&
+        !onboardingStatus.hasCompletedMemoriesTutorial;
+
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text('Memories'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+          ),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : memories.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      itemCount: memories.length,
+                      itemBuilder: (context, index) {
+                        return _buildMemoryCard(memories[index]);
+                      },
+                    ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _addMemory,
+            child: const Icon(Icons.add),
+          ),
+        ),
+        if (showTutorial)
+          MemoriesTutorialOverlay(
+            onComplete: () => setState(() {}),
+          ),
+      ],
     );
   }
 }
