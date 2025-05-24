@@ -26,7 +26,8 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _addMedia() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         mediaList.add(Media(
@@ -55,22 +56,25 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
 
   Future<void> _saveMemory() async {
     try {
-      List<Media> uploadedMediaList = [];
-
-      for (var media in mediaList) {
+      // Start all media uploads concurrently
+      final List<Future<Media>> uploadFutures = mediaList.map((media) async {
         if (media.url != null) {
           final mediaUrl = await MemoryUseCase(MemoryRepository()).uploadMedia(
             File(media.url!),
             media.description,
           );
 
-          uploadedMediaList.add(Media(
+          return Media(
             type: media.type,
             url: mediaUrl,
             description: media.description,
-          ));
+          );
         }
-      }
+        return media;
+      }).toList();
+
+      // Wait for all uploads to complete
+      final List<Media> uploadedMediaList = await Future.wait(uploadFutures);
 
       final memory = Memory(
         patientId: widget.patientId,
@@ -82,10 +86,12 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
 
       await MemoryUseCase(MemoryRepository()).saveMemory(memory);
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Memory saved')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Memory saved')));
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving memory: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error saving memory: $e')));
     }
   }
 
@@ -112,14 +118,16 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(
                     controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Memory Title'),
+                    decoration:
+                        const InputDecoration(labelText: 'Memory Title'),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Memory Description'),
+                    decoration:
+                        const InputDecoration(labelText: 'Memory Description'),
                   ),
                 ),
                 Padding(
@@ -143,7 +151,7 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
           ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+              (context, index) {
                 final media = mediaList[index];
                 return MediaCard(
                   media: media,
