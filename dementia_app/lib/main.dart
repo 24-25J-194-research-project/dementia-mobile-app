@@ -38,6 +38,11 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,
+              textTheme: Theme.of(context).textTheme.apply(
+                    bodyColor: Colors.black87,
+                    displayColor: Colors.black87,
+                    decoration: TextDecoration.none,
+                  ),
             ),
             locale: localeProvider.locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -54,10 +59,23 @@ class MyApp extends StatelessWidget {
 class AuthChecker extends StatelessWidget {
   const AuthChecker({super.key});
 
+  Future<bool> _initializeApp(BuildContext context) async {
+    final isLoggedIn = await AuthService().isLoggedIn();
+    if (isLoggedIn) {
+      final user = await AuthService().getCurrentUser();
+      if (user != null) {
+        // Load onboarding status before showing home screen
+        await Provider.of<OnboardingProvider>(context, listen: false)
+            .loadOnboardingStatus(user.uid);
+      }
+    }
+    return isLoggedIn;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: AuthService().isLoggedIn(),
+      future: _initializeApp(context),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(

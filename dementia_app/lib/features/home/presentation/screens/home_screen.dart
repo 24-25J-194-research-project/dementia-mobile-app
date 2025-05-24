@@ -5,7 +5,6 @@ import '../../../memories/data/repositories/memory_repository_impl.dart';
 import '../../../memories/domain/entities/memory_model.dart';
 import '../../../memories/domain/use_cases/memory_use_case.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
-import '../../../onboarding/presentation/widgets/memories_tutorial_overlay.dart';
 import '../../../onboarding/presentation/widgets/patient_profile_tutorial_overlay.dart';
 import '../../../onboarding/presentation/widgets/sidebar_tutorial_overlay.dart';
 import '../../../onboarding/presentation/widgets/welcome_tutorial_overlay.dart';
@@ -44,11 +43,7 @@ class HomeScreenState extends State<HomeScreen> {
       final user = await AuthService().getCurrentUser();
       if (user != null) {
         patientId = user.uid;
-        
-        // Load onboarding status
-        await Provider.of<OnboardingProvider>(context, listen: false)
-            .loadOnboardingStatus(user.uid);
-            
+
         if (patientId != null) {
           therapyOutlines = await _therapyOutlineUseCase
               .fetchCompletedTherapyOutlines(patientId!);
@@ -109,27 +104,31 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final onboardingProvider = Provider.of<OnboardingProvider>(context);
     final onboardingStatus = onboardingProvider.onboardingStatus;
-    
+    final bool isOnboardingLoading = onboardingProvider.isLoading;
+
     Widget? tutorialOverlay;
-    if (onboardingStatus == null || !onboardingStatus.hasCompletedWelcome) {
-      tutorialOverlay = WelcomeTutorialOverlay(
-        onNext: () => setState(() {}),
-        onSkip: _handleOnboardingComplete,
-      );
-    } else if (!onboardingStatus.hasCompletedSidebarTutorial) {
-      tutorialOverlay = SidebarTutorialOverlay(
-        onOpenDrawer: _openDrawer,
-        onNext: () => setState(() {}),
-        onSkip: _handleOnboardingComplete,
-      );
-    } else if (!onboardingStatus.hasCompletedPatientProfile) {
-      tutorialOverlay = PatientProfileTutorialOverlay(
-        onNext: () {
-          _navigateToProfile();
-          _handleOnboardingComplete();
-        },
-        onSkip: _handleOnboardingComplete,
-      );
+    if (!isOnboardingLoading) {
+      // Only show tutorials if onboarding is not loading
+      if (onboardingStatus == null || !onboardingStatus.hasCompletedWelcome) {
+        tutorialOverlay = WelcomeTutorialOverlay(
+          onNext: () => setState(() {}),
+          onSkip: _handleOnboardingComplete,
+        );
+      } else if (!onboardingStatus.hasCompletedSidebarTutorial) {
+        tutorialOverlay = SidebarTutorialOverlay(
+          onOpenDrawer: _openDrawer,
+          onNext: () => setState(() {}),
+          onSkip: _handleOnboardingComplete,
+        );
+      } else if (!onboardingStatus.hasCompletedPatientProfile) {
+        tutorialOverlay = PatientProfileTutorialOverlay(
+          onNext: () {
+            _navigateToProfile();
+            _handleOnboardingComplete();
+          },
+          onSkip: _handleOnboardingComplete,
+        );
+      }
     }
 
     return Stack(

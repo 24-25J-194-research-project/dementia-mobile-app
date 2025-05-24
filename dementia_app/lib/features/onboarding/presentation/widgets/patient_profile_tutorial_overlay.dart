@@ -27,7 +27,7 @@ class _PatientProfileTutorialOverlayState
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _animation = CurvedAnimation(
@@ -93,17 +93,24 @@ class _PatientProfileTutorialOverlayState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Patient Profile: The Key to Personalization',
+                    'First Step: Update the Patient Profile',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                      decoration: TextDecoration.none,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   const Text(
                     'Your patient profile helps us create a more meaningful and personalized therapy experience.',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -113,13 +120,34 @@ class _PatientProfileTutorialOverlayState
                     '• Family members\n'
                     '• Life experiences\n'
                     '• Education history',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.6,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'This information helps us tailor reminiscence therapies to make them more effective and meaningful.',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'After completing the profile, continue to add memories that will be used in personalized therapy sessions.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),

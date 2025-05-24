@@ -28,7 +28,7 @@ class _SidebarTutorialOverlayState extends State<SidebarTutorialOverlay>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _animation = CurvedAnimation(
@@ -113,14 +113,21 @@ class _SidebarTutorialOverlayState extends State<SidebarTutorialOverlay>
                     const Text(
                       'Explore the Menu',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                        decoration: TextDecoration.none,
                       ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Here\'s what you can do:',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                        height: 1.4,
+                        decoration: TextDecoration.none,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureItem(
@@ -180,15 +187,19 @@ class _SidebarTutorialOverlayState extends State<SidebarTutorialOverlay>
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 Text(
                   description,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: Colors.black87,
+                    height: 1.4,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ],

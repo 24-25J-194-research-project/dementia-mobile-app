@@ -25,7 +25,7 @@ class _WelcomeTutorialOverlayState extends State<WelcomeTutorialOverlay>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _animation = CurvedAnimation(
@@ -93,21 +93,33 @@ class _WelcomeTutorialOverlayState extends State<WelcomeTutorialOverlay>
                   const Text(
                     'Welcome to Memory Bloom! 🌸',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                      decoration: TextDecoration.none,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Your companion in preserving and reliving precious memories.',
-                    style: TextStyle(fontSize: 16),
+                    'Your gentle companion in reviving joyful moments and preserving cherished memories.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Let\'s take a quick tour to help you get started.',
-                    style: TextStyle(fontSize: 16),
+                    'Let\'s take a quick tour to show you how everything works.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),

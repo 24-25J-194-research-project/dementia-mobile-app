@@ -24,7 +24,7 @@ class _MemoriesTutorialOverlayState extends State<MemoriesTutorialOverlay>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     _animation = CurvedAnimation(
@@ -81,33 +81,61 @@ class _MemoriesTutorialOverlayState extends State<MemoriesTutorialOverlay>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Creating Memories 📸',
+                    'Creating Memories',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                      decoration: TextDecoration.none,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   const Text(
                     'This is where you\'ll store and manage precious memories that can be used in therapy sessions.',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'Each memory can include:\n'
-                    '• Photos and videos\n'
+                    '• Photos\n'
                     '• Descriptions and stories\n'
                     '• Important dates\n'
                     '• People involved',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.6,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'These memories will be used to create personalized therapy sessions that resonate with the patient.',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'After adding memories, click the "Process Now" button to start creating therapy sessions for that memory.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
