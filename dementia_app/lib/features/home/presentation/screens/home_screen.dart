@@ -16,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  String userName = "Loading...";
   bool isLoading = true;
   String? patientId;
   List<TherapyOutline> therapyOutlines = [];
@@ -68,17 +67,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserName();
     _loadTherapyOutlines();
-  }
-
-  void _loadUserName() async {
-    var user = await AuthService().getCurrentUser();
-    if (user != null) {
-      setState(() {
-        userName = user.lastName;
-      });
-    }
   }
 
   String getGreeting() {
@@ -97,7 +86,7 @@ class HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${getGreeting()}, $userName!',
+          '${getGreeting()}!',
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
