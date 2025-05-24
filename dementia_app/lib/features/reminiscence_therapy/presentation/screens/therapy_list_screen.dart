@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:provider/provider.dart';
 
 import '../../../auth/presentation/providers/auth_service.dart';
 import '../../../memories/data/repositories/memory_repository_impl.dart';
 import '../../../memories/domain/entities/memory_model.dart';
 import '../../../memories/domain/use_cases/memory_use_case.dart';
+import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../../onboarding/presentation/widgets/therapy_tutorial_overlay.dart';
 import '../../data/repositories/therapy_outline_repository_impl.dart';
 import '../../domain/entities/therapy_outline.dart';
 import '../../domain/use_cases/therapy_outline_use_case.dart';
@@ -75,32 +78,51 @@ class ReminiscenceTherapiesScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reminiscence Therapies')),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : therapyOutlines.isEmpty || memories.isEmpty
-              ? _buildEmptyView()
-              : SingleChildScrollView(
-                  child: Column(
-                    children: therapyOutlines.map((therapyOutline) {
-                      final memory = memories.firstWhere(
-                        (m) => m.id == therapyOutline.memoryId,
-                        orElse: () => Memory(
-                            patientId: '',
-                            title: '',
-                            description: '',
-                            date: '',
-                            media: []),
-                      );
-                      return _buildTherapyCard(therapyOutline, memory);
-                    }).toList(),
-                  ),
-                ),
+    final onboardingProvider = Provider.of<OnboardingProvider>(context);
+    final onboardingStatus = onboardingProvider.onboardingStatus;
+    final bool showTutorial = onboardingStatus != null &&
+        onboardingStatus.isPhaseOneComplete &&
+        !onboardingStatus.hasCompletedTherapyTutorial;
+
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text('Reminiscence Therapies'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+          ),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : therapyOutlines.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      itemCount: therapyOutlines.length,
+                      itemBuilder: (context, index) {
+                        final therapyOutline = therapyOutlines[index];
+                        final memory = memories.firstWhere(
+                          (m) => m.id == therapyOutline.memoryId,
+                          orElse: () => Memory(
+                              patientId: '',
+                              title: '',
+                              description: '',
+                              date: '',
+                              media: []),
+                        );
+                        return _buildTherapyCard(therapyOutline, memory);
+                      },
+                    ),
+        ),
+        if (showTutorial)
+          TherapyTutorialOverlay(
+            onComplete: () => setState(() {}),
+          ),
+      ],
     );
   }
 
-  Widget _buildEmptyView() {
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -88,6 +88,17 @@ class OnboardingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> completeTherapyTutorial() async {
+    if (_onboardingStatus == null) return;
+
+    _onboardingStatus = _onboardingStatus!.copyWith(
+      hasCompletedTherapyTutorial: true,
+      lastModified: DateTime.now(),
+    );
+    await _saveOnboardingStatus();
+    notifyListeners();
+  }
+
   Future<void> skipOnboarding() async {
     if (_onboardingStatus == null) return;
 
@@ -96,6 +107,7 @@ class OnboardingProvider extends ChangeNotifier {
       hasCompletedSidebarTutorial: true,
       hasCompletedPatientProfile: true,
       hasCompletedMemoriesTutorial: true,
+      hasCompletedTherapyTutorial: true,
       lastModified: DateTime.now(),
     );
     await _saveOnboardingStatus();
