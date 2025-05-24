@@ -234,11 +234,6 @@ class HomeScreenState extends State<HomeScreen> {
               memory.description ?? 'No description',
               style: const TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Status: ${therapyOutline.status}',
-              style: const TextStyle(fontSize: 16),
-            ),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
