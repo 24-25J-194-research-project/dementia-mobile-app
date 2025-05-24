@@ -7,7 +7,8 @@ class FamilyMemberCard extends StatelessWidget {
   final Function onSave;
   final Function onDelete;
   final Function(FamilyMember) onEdit;
-  final List<String> existingFamilyMemberNames; // Added list of existing family member names
+  final List<String>
+      existingFamilyMemberNames; // Added list of existing family member names
 
   const FamilyMemberCard({
     super.key,
@@ -15,18 +16,23 @@ class FamilyMemberCard extends StatelessWidget {
     required this.onSave,
     required this.onDelete,
     required this.onEdit,
-    required this.existingFamilyMemberNames,  // Pass existing family member names
+    required this.existingFamilyMemberNames, // Pass existing family member names
   });
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController nameController = TextEditingController(text: familyMember.name);
-    TextEditingController genderController = TextEditingController(text: familyMember.gender);
-    TextEditingController relationController = TextEditingController(text: familyMember.relation);
-    TextEditingController dobController = TextEditingController(text: familyMember.dob);
-    TextEditingController birthPlaceController = TextEditingController(text: familyMember.birthPlace);
-    TextEditingController spouseController = TextEditingController(text: familyMember.spouse);
-    TextEditingController notesController = TextEditingController(text: familyMember.notes);
+    TextEditingController nameController =
+        TextEditingController(text: familyMember.name);
+    TextEditingController relationController =
+        TextEditingController(text: familyMember.relation);
+    TextEditingController dobController =
+        TextEditingController(text: familyMember.dob);
+    TextEditingController birthPlaceController =
+        TextEditingController(text: familyMember.birthPlace);
+    TextEditingController spouseController =
+        TextEditingController(text: familyMember.spouse);
+    TextEditingController notesController =
+        TextEditingController(text: familyMember.notes);
 
     return Card(
       child: Padding(
@@ -49,9 +55,9 @@ class FamilyMemberCard extends StatelessWidget {
               decoration: const InputDecoration(labelText: 'Gender'),
               items: ['Male', 'Female', 'Other']
                   .map((gender) => DropdownMenuItem<String>(
-                value: gender,
-                child: Text(gender),
-              ))
+                        value: gender,
+                        child: Text(gender),
+                      ))
                   .toList(),
               onChanged: (value) {
                 familyMember.gender = value!;
@@ -91,9 +97,9 @@ class FamilyMemberCard extends StatelessWidget {
               decoration: const InputDecoration(labelText: 'Marital Status'),
               items: MaritalStatus.values
                   .map((status) => DropdownMenuItem<MaritalStatus>(
-                value: status,
-                child: Text(status.toString().split('.').last),
-              ))
+                        value: status,
+                        child: Text(status.toString().split('.').last),
+                      ))
                   .toList(),
               onChanged: (value) {
                 familyMember.maritalStatus = value;
@@ -132,7 +138,8 @@ class FamilyMemberCard extends StatelessWidget {
 
             // Display selected children
             const SizedBox(height: 10),
-            if (familyMember.children != null && familyMember.children!.isNotEmpty)
+            if (familyMember.children != null &&
+                familyMember.children!.isNotEmpty)
               Wrap(
                 children: familyMember.children!
                     .map((child) => Chip(label: Text(child)))

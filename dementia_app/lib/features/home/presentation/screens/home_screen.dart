@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_service.dart';
 import '../../../memories/data/repositories/memory_repository_impl.dart';
 import '../../../memories/domain/entities/memory_model.dart';
@@ -17,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  String userName = "Loading...";
   bool isLoading = true;
   String? patientId;
   List<TherapyOutline> therapyOutlines = [];
@@ -33,7 +31,10 @@ class HomeScreenState extends State<HomeScreen> {
       final user = await AuthService().getCurrentUser();
       if (user != null) {
         patientId = user.uid;
-        therapyOutlines = await _therapyOutlineUseCase.fetchLatestCompletedTherapyOutlines();
+        if (patientId != null) {
+          therapyOutlines = await _therapyOutlineUseCase
+              .fetchCompletedTherapyOutlines(patientId!);
+        }
 
         if (therapyOutlines.isEmpty) {
           setState(() {
@@ -42,14 +43,16 @@ class HomeScreenState extends State<HomeScreen> {
           return;
         }
 
-        List<String> memoryIds = therapyOutlines.map((outline) => outline.memoryId).toList();
+        List<String> memoryIds =
+            therapyOutlines.map((outline) => outline.memoryId).toList();
         memories = await _memoryUseCase.getMemoryByIds(memoryIds);
 
         setState(() {
           isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User not logged in')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('User not logged in')));
       }
     } catch (e) {
       setState(() {
@@ -64,17 +67,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserName();
     _loadTherapyOutlines();
-  }
-
-  void _loadUserName() async {
-    var user = await AuthService().getCurrentUser();
-    if (user != null) {
-      setState(() {
-        userName = user.lastName;
-      });
-    }
   }
 
   String getGreeting() {
@@ -93,7 +86,7 @@ class HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${getGreeting()}, $userName!',
+          '${getGreeting()}!',
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -109,41 +102,45 @@ class HomeScreenState extends State<HomeScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : therapyOutlines.isEmpty || memories.isEmpty
-          ? _buildEmptyView()
-          : SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Image.asset(
-                'assets/images/home.jpg',
-                fit: BoxFit.cover,
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Reminiscence Therapies',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              ? _buildEmptyView()
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Image.asset(
+                          'assets/images/home.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text(
+                          'Reminiscence Therapies',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      ...therapyOutlines.map((therapyOutline) {
+                        final memory = memories.firstWhere(
+                          (m) => m.id == therapyOutline.memoryId,
+                          orElse: () => Memory(
+                              patientId: '',
+                              title: '',
+                              description: '',
+                              date: '',
+                              media: []),
+                        );
+                        return _buildTherapyCard(therapyOutline, memory);
+                      }),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            ...therapyOutlines.map((therapyOutline) {
-              final memory = memories.firstWhere(
-                    (m) => m.id == therapyOutline.memoryId,
-                orElse: () => Memory(patientId: '', title: '', description: '', date: '', media: []),
-              );
-              return _buildTherapyCard(therapyOutline, memory);
-            }),
-          ],
-        ),
-      ),
     );
   }
-
 
   Widget _buildEmptyView() {
     return Center(
@@ -184,13 +181,11 @@ class HomeScreenState extends State<HomeScreen> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-
             Text(
               'Status: ${therapyOutline.status}',
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 8),
-
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(

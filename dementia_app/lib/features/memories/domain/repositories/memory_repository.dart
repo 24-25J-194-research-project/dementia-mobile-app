@@ -8,4 +8,5 @@ abstract class IMemoryRepository {
   Future<Memory?> getMemoryById(String id);
   Future<List<Memory>> getMemoriesByIds(List<String> ids);
   Future<String> uploadMedia(File file, String fileName);
+  Future<void> deleteMemory(String id);
 }

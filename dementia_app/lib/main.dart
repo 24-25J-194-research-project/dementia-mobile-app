@@ -10,9 +10,10 @@ import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/providers/locale_provider.dart';
 
-void main() async {
+Future<void> main() async {
   await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

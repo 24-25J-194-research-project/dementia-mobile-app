@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 enum StepType {
   introduction,
   normal,
@@ -13,7 +11,7 @@ extension StepTypeExtension on StepType {
 
   static StepType fromString(String value) {
     return StepType.values.firstWhere(
-          (e) => e.value == value,
+      (e) => e.value == value,
       orElse: () => StepType.normal,
     );
   }
@@ -99,7 +97,8 @@ class TherapyOutline {
     this.steps,
   });
 
-  factory TherapyOutline.fromMap(Map<String, dynamic> map, {required String id}) {
+  factory TherapyOutline.fromMap(Map<String, dynamic> map,
+      {required String id}) {
     return TherapyOutline(
       id: id,
       patientId: map['patientId'],
@@ -121,4 +120,3 @@ class TherapyOutline {
     };
   }
 }
-

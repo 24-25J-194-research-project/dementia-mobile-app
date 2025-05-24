@@ -1,5 +1,5 @@
 name: dementia_app
-description: "A new Flutter project."
+description: "A Dementia Therapy App"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -51,7 +51,7 @@ dependencies:
   json_annotation: ^4.9.0
   multi_select_flutter: ^4.1.3
   carousel_slider: ^5.0.0
-  audioplayers: ^6.4.0
+  just_audio: ^0.9.36
 
 dev_dependencies:
   flutter_test:

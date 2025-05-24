@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../../auth/presentation/providers/auth_service.dart';
 import '../../../memories/data/repositories/memory_repository_impl.dart';
@@ -17,7 +16,8 @@ class ReminiscenceTherapiesScreen extends StatefulWidget {
       ReminiscenceTherapiesScreenState();
 }
 
-class ReminiscenceTherapiesScreenState extends State<ReminiscenceTherapiesScreen> {
+class ReminiscenceTherapiesScreenState
+    extends State<ReminiscenceTherapiesScreen> {
   bool isLoading = true;
   String? patientId;
   List<TherapyOutline> therapyOutlines = [];
@@ -39,7 +39,10 @@ class ReminiscenceTherapiesScreenState extends State<ReminiscenceTherapiesScreen
       final user = await AuthService().getCurrentUser();
       if (user != null) {
         patientId = user.uid;
-        therapyOutlines = await _therapyOutlineUseCase.fetchLatestCompletedTherapyOutlines();
+        if (patientId != null) {
+          therapyOutlines = await _therapyOutlineUseCase
+              .fetchCompletedTherapyOutlines(patientId!);
+        }
 
         if (therapyOutlines.isEmpty) {
           setState(() {
@@ -48,14 +51,16 @@ class ReminiscenceTherapiesScreenState extends State<ReminiscenceTherapiesScreen
           return;
         }
 
-        List<String> memoryIds = therapyOutlines.map((outline) => outline.memoryId).toList();
+        List<String> memoryIds =
+            therapyOutlines.map((outline) => outline.memoryId).toList();
         memories = await _memoryUseCase.getMemoryByIds(memoryIds);
 
         setState(() {
           isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User not logged in')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('User not logged in')));
       }
     } catch (e) {
       setState(() {
@@ -67,7 +72,6 @@ class ReminiscenceTherapiesScreenState extends State<ReminiscenceTherapiesScreen
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,18 +79,23 @@ class ReminiscenceTherapiesScreenState extends State<ReminiscenceTherapiesScreen
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : therapyOutlines.isEmpty || memories.isEmpty
-          ? _buildEmptyView()
-          : SingleChildScrollView(
-        child: Column(
-          children: therapyOutlines.map((therapyOutline) {
-            final memory = memories.firstWhere(
-                  (m) => m.id == therapyOutline.memoryId,
-              orElse: () => Memory(patientId: '', title: '', description: '', date: '', media: []),
-            );
-            return _buildTherapyCard(therapyOutline, memory);
-          }).toList(),
-        ),
-      ),
+              ? _buildEmptyView()
+              : SingleChildScrollView(
+                  child: Column(
+                    children: therapyOutlines.map((therapyOutline) {
+                      final memory = memories.firstWhere(
+                        (m) => m.id == therapyOutline.memoryId,
+                        orElse: () => Memory(
+                            patientId: '',
+                            title: '',
+                            description: '',
+                            date: '',
+                            media: []),
+                      );
+                      return _buildTherapyCard(therapyOutline, memory);
+                    }).toList(),
+                  ),
+                ),
     );
   }
 
@@ -129,13 +138,11 @@ class ReminiscenceTherapiesScreenState extends State<ReminiscenceTherapiesScreen
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-
             Text(
               'Status: ${therapyOutline.status}',
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 8),
-
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
