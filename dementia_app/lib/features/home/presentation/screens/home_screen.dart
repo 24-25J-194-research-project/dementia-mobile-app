@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../auth/presentation/providers/auth_service.dart';
 import '../../../memories/data/repositories/memory_repository_impl.dart';
 import '../../../memories/domain/entities/memory_model.dart';
 import '../../../memories/domain/use_cases/memory_use_case.dart';
+import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../../onboarding/presentation/widgets/memories_tutorial_overlay.dart';
+import '../../../onboarding/presentation/widgets/patient_profile_tutorial_overlay.dart';
+import '../../../onboarding/presentation/widgets/sidebar_tutorial_overlay.dart';
+import '../../../onboarding/presentation/widgets/welcome_tutorial_overlay.dart';
 import '../../../reminiscence_therapy/data/repositories/therapy_outline_repository_impl.dart';
 import '../../../reminiscence_therapy/domain/entities/therapy_outline.dart';
 import '../../../reminiscence_therapy/domain/use_cases/therapy_outline_use_case.dart';
@@ -20,17 +26,29 @@ class HomeScreenState extends State<HomeScreen> {
   String? patientId;
   List<TherapyOutline> therapyOutlines = [];
   List<Memory> memories = [];
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final TherapyOutlineUseCase _therapyOutlineUseCase = TherapyOutlineUseCase(
     TherapyOutlineRepositoryImpl(),
   );
   final MemoryUseCase _memoryUseCase = MemoryUseCase(MemoryRepository());
 
-  Future<void> _loadTherapyOutlines() async {
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
     try {
       final user = await AuthService().getCurrentUser();
       if (user != null) {
         patientId = user.uid;
+        
+        // Load onboarding status
+        await Provider.of<OnboardingProvider>(context, listen: false)
+            .loadOnboardingStatus(user.uid);
+            
         if (patientId != null) {
           therapyOutlines = await _therapyOutlineUseCase
               .fetchCompletedTherapyOutlines(patientId!);
@@ -64,10 +82,16 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadTherapyOutlines();
+  void _openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  void _handleOnboardingComplete() {
+    setState(() {}); // Refresh the UI
+  }
+
+  void _navigateToProfile() {
+    Navigator.pushNamed(context, '/profile');
   }
 
   String getGreeting() {
@@ -83,62 +107,93 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '${getGreeting()}!',
-          style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+    final onboardingProvider = Provider.of<OnboardingProvider>(context);
+    final onboardingStatus = onboardingProvider.onboardingStatus;
+    
+    Widget? tutorialOverlay;
+    if (onboardingStatus == null || !onboardingStatus.hasCompletedWelcome) {
+      tutorialOverlay = WelcomeTutorialOverlay(
+        onNext: () => setState(() {}),
+        onSkip: _handleOnboardingComplete,
+      );
+    } else if (!onboardingStatus.hasCompletedSidebarTutorial) {
+      tutorialOverlay = SidebarTutorialOverlay(
+        onOpenDrawer: _openDrawer,
+        onNext: () => setState(() {}),
+        onSkip: _handleOnboardingComplete,
+      );
+    } else if (!onboardingStatus.hasCompletedPatientProfile) {
+      tutorialOverlay = PatientProfileTutorialOverlay(
+        onNext: () {
+          _navigateToProfile();
+          _handleOnboardingComplete();
+        },
+        onSkip: _handleOnboardingComplete,
+      );
+    }
+
+    return Stack(
+      children: [
+        Scaffold(
+          key: _scaffoldKey,
+          appBar: AppBar(
+            title: Text(
+              '${getGreeting()}!',
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            iconTheme: const IconThemeData(size: 36, color: Colors.black),
           ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(size: 36, color: Colors.black),
-      ),
-      drawer: const DrawerMenu(),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : therapyOutlines.isEmpty || memories.isEmpty
-              ? _buildEmptyView()
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Image.asset(
-                          'assets/images/home.jpg',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text(
-                          'Reminiscence Therapies',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+          drawer: const DrawerMenu(),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : therapyOutlines.isEmpty || memories.isEmpty
+                  ? _buildEmptyView()
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Image.asset(
+                              'assets/images/home.jpg',
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              'Reminiscence Therapies',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          ...therapyOutlines.map((therapyOutline) {
+                            final memory = memories.firstWhere(
+                              (m) => m.id == therapyOutline.memoryId,
+                              orElse: () => Memory(
+                                  patientId: '',
+                                  title: '',
+                                  description: '',
+                                  date: '',
+                                  media: []),
+                            );
+                            return _buildTherapyCard(therapyOutline, memory);
+                          }),
+                        ],
                       ),
-                      ...therapyOutlines.map((therapyOutline) {
-                        final memory = memories.firstWhere(
-                          (m) => m.id == therapyOutline.memoryId,
-                          orElse: () => Memory(
-                              patientId: '',
-                              title: '',
-                              description: '',
-                              date: '',
-                              media: []),
-                        );
-                        return _buildTherapyCard(therapyOutline, memory);
-                      }),
-                    ],
-                  ),
-                ),
+                    ),
+        ),
+        if (tutorialOverlay != null) tutorialOverlay,
+      ],
     );
   }
 
