@@ -4,6 +4,7 @@ class OnboardingStatus {
   final bool hasCompletedSidebarTutorial;
   final bool hasCompletedPatientProfile;
   final bool hasCompletedMemoriesTutorial;
+  final bool hasCompletedTherapyTutorial;
   final DateTime? lastModified;
 
   OnboardingStatus({
@@ -12,6 +13,7 @@ class OnboardingStatus {
     this.hasCompletedSidebarTutorial = false,
     this.hasCompletedPatientProfile = false,
     this.hasCompletedMemoriesTutorial = false,
+    this.hasCompletedTherapyTutorial = false,
     this.lastModified,
   });
 
@@ -21,7 +23,9 @@ class OnboardingStatus {
       hasCompletedPatientProfile;
 
   bool get isPhaseTwoComplete =>
-      isPhaseOneComplete && hasCompletedMemoriesTutorial;
+      isPhaseOneComplete &&
+      hasCompletedMemoriesTutorial &&
+      hasCompletedTherapyTutorial;
 
   Map<String, dynamic> toJson() {
     return {
@@ -30,6 +34,7 @@ class OnboardingStatus {
       'hasCompletedSidebarTutorial': hasCompletedSidebarTutorial,
       'hasCompletedPatientProfile': hasCompletedPatientProfile,
       'hasCompletedMemoriesTutorial': hasCompletedMemoriesTutorial,
+      'hasCompletedTherapyTutorial': hasCompletedTherapyTutorial,
       'lastModified': lastModified?.toIso8601String(),
     };
   }
@@ -42,6 +47,7 @@ class OnboardingStatus {
       hasCompletedPatientProfile: json['hasCompletedPatientProfile'] ?? false,
       hasCompletedMemoriesTutorial:
           json['hasCompletedMemoriesTutorial'] ?? false,
+      hasCompletedTherapyTutorial: json['hasCompletedTherapyTutorial'] ?? false,
       lastModified: json['lastModified'] != null
           ? DateTime.parse(json['lastModified'])
           : null,
@@ -54,6 +60,7 @@ class OnboardingStatus {
     bool? hasCompletedSidebarTutorial,
     bool? hasCompletedPatientProfile,
     bool? hasCompletedMemoriesTutorial,
+    bool? hasCompletedTherapyTutorial,
     DateTime? lastModified,
   }) {
     return OnboardingStatus(
@@ -65,6 +72,8 @@ class OnboardingStatus {
           hasCompletedPatientProfile ?? this.hasCompletedPatientProfile,
       hasCompletedMemoriesTutorial:
           hasCompletedMemoriesTutorial ?? this.hasCompletedMemoriesTutorial,
+      hasCompletedTherapyTutorial:
+          hasCompletedTherapyTutorial ?? this.hasCompletedTherapyTutorial,
       lastModified: lastModified ?? this.lastModified,
     );
   }

@@ -145,6 +145,11 @@ class _SidebarTutorialOverlayState extends State<SidebarTutorialOverlay>
                       title: 'Patient Profile',
                       description: 'Manage patient information',
                     ),
+                    _buildFeatureItem(
+                      icon: Icons.settings,
+                      title: 'User Settings',
+                      description: 'Update your email and password',
+                    ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

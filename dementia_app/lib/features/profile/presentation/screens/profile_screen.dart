@@ -10,7 +10,6 @@ import '../../../auth/presentation/providers/auth_service.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 import 'education_screen.dart';
 import 'family_members_screen.dart';
-import 'user_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
