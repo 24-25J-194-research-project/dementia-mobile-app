@@ -2,25 +2,20 @@ import '../entities/therapy_outline.dart';
 import '../repositories/therapy_outline_repository.dart';
 
 class TherapyOutlineUseCase {
-  final TherapyOutlineRepository _therapyOutlineRepository;
+  final TherapyOutlineRepository _repository;
 
-  TherapyOutlineUseCase(this._therapyOutlineRepository);
+  TherapyOutlineUseCase(this._repository);
 
-  Future<List<TherapyOutline>> fetchLatestCompletedTherapyOutlines() async {
-    try {
-      List<TherapyOutline> therapyOutlines = await _therapyOutlineRepository.getCompletedTherapyOutlines();
-      return therapyOutlines;
-    } catch (e) {
-      throw Exception('Error fetching completed therapy outlines: $e');
-    }
+  Future<List<TherapyOutline>> fetchCompletedTherapyOutlines(
+      String patientId) async {
+    return await _repository.getCompletedTherapyOutlines(patientId);
   }
 
-  Future<List<TherapyOutline>> fetchAllTherapyOutlines() async {
-    try {
-      List<TherapyOutline> therapyOutlines = await _therapyOutlineRepository.getAllTherapyOutlines();
-      return therapyOutlines;
-    } catch (e) {
-      throw Exception('Error fetching all therapy outlines: $e');
-    }
+  Future<List<TherapyOutline>> fetchAllTherapyOutlines(String patientId) async {
+    return await _repository.getAllTherapyOutlines(patientId);
+  }
+
+  Future<void> deleteTherapyOutlinesByMemoryId(String memoryId) async {
+    await _repository.deleteTherapyOutlinesByMemoryId(memoryId);
   }
 }

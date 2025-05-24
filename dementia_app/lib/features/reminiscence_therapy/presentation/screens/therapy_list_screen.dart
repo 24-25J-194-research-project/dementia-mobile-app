@@ -39,8 +39,10 @@ class ReminiscenceTherapiesScreenState
       final user = await AuthService().getCurrentUser();
       if (user != null) {
         patientId = user.uid;
-        therapyOutlines =
-            await _therapyOutlineUseCase.fetchLatestCompletedTherapyOutlines();
+        if (patientId != null) {
+          therapyOutlines = await _therapyOutlineUseCase
+              .fetchCompletedTherapyOutlines(patientId!);
+        }
 
         if (therapyOutlines.isEmpty) {
           setState(() {

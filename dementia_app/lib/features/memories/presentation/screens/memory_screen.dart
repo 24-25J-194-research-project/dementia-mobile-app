@@ -24,7 +24,7 @@ class MemoryScreenState extends State<MemoryScreen> {
 
   final MemoryUseCase _memoryUseCase = MemoryUseCase(MemoryRepository());
   final TherapyOutlineUseCase _therapyOutlineUseCase =
-  TherapyOutlineUseCase(TherapyOutlineRepositoryImpl());
+      TherapyOutlineUseCase(TherapyOutlineRepositoryImpl());
 
   @override
   void initState() {
@@ -44,10 +44,12 @@ class MemoryScreenState extends State<MemoryScreen> {
           isLoading = false;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User not logged in')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('User not logged in')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error loading memories')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error loading memories')));
     }
   }
 
@@ -86,7 +88,8 @@ class MemoryScreenState extends State<MemoryScreen> {
 
             // Notification alert (Based on therapy outline status)
             FutureBuilder<List<TherapyOutline>>(
-              future: _therapyOutlineUseCase.fetchAllTherapyOutlines(),
+              future:
+                  _therapyOutlineUseCase.fetchAllTherapyOutlines(patientId!),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const CircularProgressIndicator();
@@ -96,22 +99,30 @@ class MemoryScreenState extends State<MemoryScreen> {
 
                 List<TherapyOutline> therapyOutlines = snapshot.data ?? [];
                 TherapyOutline outline = therapyOutlines.firstWhere(
-                      (e) => e.memoryId == memory.id,
-                  orElse: () => TherapyOutline(memoryId: '', status: 'not processed', id: '', patientId: ''),
+                  (e) => e.memoryId == memory.id,
+                  orElse: () => TherapyOutline(
+                      memoryId: '',
+                      status: 'not processed',
+                      id: '',
+                      patientId: ''),
                 );
 
                 if (outline.status == 'not processed') {
-                  return _buildStatus("Not processed yet.", Icons.pending, "Process Now", memory.id!);
+                  return _buildStatus("Not processed yet.", Icons.pending,
+                      "Process Now", memory.id!);
                 } else if (outline.status == 'completed') {
-                  return _buildStatus(
-                      "This memory is successfully processed.",
+                  return _buildStatus("This memory is successfully processed.",
                       Icons.check_circle, "View Therapies", memory.id!);
-                } else if (outline.status == 'processing' || outline.status == 'pending') {
-                  return _buildStatus("Memory is being processed...", Icons.autorenew, "Wait", memory.id!);
+                } else if (outline.status == 'processing' ||
+                    outline.status == 'pending') {
+                  return _buildStatus("Memory is being processed...",
+                      Icons.autorenew, "Wait", memory.id!);
                 } else if (outline.status == 'failed') {
-                  return _buildStatus("Memory processing failed. Please retry.", Icons.error, "Retry", memory.id!);
+                  return _buildStatus("Memory processing failed. Please retry.",
+                      Icons.error, "Retry", memory.id!);
                 } else {
-                  return _buildStatus("Memory is being processed...", Icons.autorenew, "Wait", memory.id!);
+                  return _buildStatus("Memory is being processed...",
+                      Icons.autorenew, "Wait", memory.id!);
                 }
               },
             ),
@@ -137,18 +148,72 @@ class MemoryScreenState extends State<MemoryScreen> {
 
             Align(
               alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MemoryDetailScreen(memory: memory),
-                    ),
-                  ).then((_) {
-                    _loadMemories();
-                  });
-                },
-                child: const Text('Edit'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Delete Memory'),
+                            content: const Text(
+                                'Are you sure you want to delete this memory? This action cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                child: const Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
+                                onPressed: () async {
+                                  try {
+                                    await _memoryUseCase
+                                        .deleteMemory(memory.id!);
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Memory deleted successfully')),
+                                    );
+                                    _loadMemories();
+                                  } catch (e) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Error deleting memory: $e')),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              MemoryDetailScreen(memory: memory),
+                        ),
+                      ).then((_) {
+                        _loadMemories();
+                      });
+                    },
+                    child: const Text('Edit'),
+                  ),
+                ],
               ),
             ),
           ],
@@ -166,7 +231,8 @@ class MemoryScreenState extends State<MemoryScreen> {
     }
 
     return categories
-        .map((category) => category.toString().replaceFirst('MemoryCategory.', ''))
+        .map((category) =>
+            category.toString().replaceFirst('MemoryCategory.', ''))
         .map((category) => category[0].toUpperCase() + category.substring(1))
         .join(', ');
   }
@@ -194,18 +260,17 @@ class MemoryScreenState extends State<MemoryScreen> {
     }
 
     List<String> formattedTags = tags.map((tag) {
-      return tag.split(' ')
-          .toSet()
-          .join(' ');
+      return tag.split(' ').toSet().join(' ');
     }).toList();
 
-    return formattedTags.toSet()
+    return formattedTags
+        .toSet()
         .map((tag) => tag[0].toUpperCase() + tag.substring(1))
         .join(', ');
   }
 
-
-  Widget _buildStatus(String message, IconData icon, String buttonText, String memoryId) {
+  Widget _buildStatus(
+      String message, IconData icon, String buttonText, String memoryId) {
     Color alertColor;
     if (icon == Icons.check_circle) {
       alertColor = Colors.green.shade100;
@@ -222,7 +287,8 @@ class MemoryScreenState extends State<MemoryScreen> {
 
       apiClient.post('/therapy/process/$memoryId').then((response) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Successfully started processing the memory!')),
+          const SnackBar(
+              content: Text('Successfully started processing the memory!')),
         );
         _loadMemories();
       }).catchError((error) {
@@ -231,7 +297,6 @@ class MemoryScreenState extends State<MemoryScreen> {
         );
       });
     }
-
 
     void viewTherapy() {
       Navigator.pushNamed(context, '/reminiscence-therapies');
@@ -246,10 +311,10 @@ class MemoryScreenState extends State<MemoryScreen> {
           color: icon == Icons.check_circle
               ? Colors.green
               : icon == Icons.error
-              ? Colors.red
-              : icon == Icons.autorenew
-              ? Colors.orange
-              : Colors.blue,
+                  ? Colors.red
+                  : icon == Icons.autorenew
+                      ? Colors.orange
+                      : Colors.blue,
           width: 2,
         ),
       ),
@@ -260,10 +325,10 @@ class MemoryScreenState extends State<MemoryScreen> {
             color: icon == Icons.check_circle
                 ? Colors.green
                 : icon == Icons.error
-                ? Colors.red
-                : icon == Icons.autorenew
-                ? Colors.orange
-                : Colors.blue,
+                    ? Colors.red
+                    : icon == Icons.autorenew
+                        ? Colors.orange
+                        : Colors.blue,
           ),
           const SizedBox(width: 10),
           // Allow the text to take full width and wrap if needed
@@ -271,8 +336,10 @@ class MemoryScreenState extends State<MemoryScreen> {
             child: Text(
               message,
               style: const TextStyle(fontSize: 14),
-              softWrap: true, // Allow wrapping the text to the next line if needed
-              overflow: TextOverflow.visible, // Make sure the text doesn't get truncated
+              softWrap:
+                  true, // Allow wrapping the text to the next line if needed
+              overflow: TextOverflow
+                  .visible, // Make sure the text doesn't get truncated
             ),
           ),
           if (buttonText != "Wait")
@@ -293,7 +360,6 @@ class MemoryScreenState extends State<MemoryScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -301,12 +367,12 @@ class MemoryScreenState extends State<MemoryScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-        itemCount: memories.length,
-        itemBuilder: (context, index) {
-          final memory = memories[index];
-          return _buildMemoryCard(memory);
-        },
-      ),
+              itemCount: memories.length,
+              itemBuilder: (context, index) {
+                final memory = memories[index];
+                return _buildMemoryCard(memory);
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addMemory,
         child: const Icon(Icons.add),

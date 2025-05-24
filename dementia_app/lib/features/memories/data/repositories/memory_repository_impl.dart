@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../../reminiscence_therapy/data/repositories/therapy_outline_repository_impl.dart';
 
 import '../../domain/entities/memory_model.dart';
 import '../../domain/repositories/memory_repository.dart';
@@ -8,12 +9,17 @@ import '../../domain/repositories/memory_repository.dart';
 class MemoryRepository implements IMemoryRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
+  final TherapyOutlineRepositoryImpl _therapyOutlineRepository =
+      TherapyOutlineRepositoryImpl();
 
   @override
   Future<void> saveMemory(Memory memory) async {
     try {
       if (memory.id != null) {
-        await _firestore.collection('memories').doc(memory.id).update(memory.toMap());
+        await _firestore
+            .collection('memories')
+            .doc(memory.id)
+            .update(memory.toMap());
       } else {
         await _firestore.collection('memories').add(memory.toMap());
       }
@@ -69,9 +75,8 @@ class MemoryRepository implements IMemoryRepository {
   @override
   Future<String> uploadMedia(File file, String fileName) async {
     try {
-      final storageReference = _firebaseStorage
-          .ref()
-          .child('memories/${fileName}_${DateTime.now().millisecondsSinceEpoch}');
+      final storageReference = _firebaseStorage.ref().child(
+          'memories/${fileName}_${DateTime.now().millisecondsSinceEpoch}');
       if (await file.exists()) {
         final uploadTask = storageReference.putFile(file);
         await uploadTask.whenComplete(() {});
@@ -82,6 +87,36 @@ class MemoryRepository implements IMemoryRepository {
       }
     } catch (e) {
       throw Exception('Error uploading media: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteMemory(String id) async {
+    try {
+      // Get the memory first to get media URLs
+      final memory = await getMemoryById(id);
+      if (memory != null && memory.media != null) {
+        // Delete all media files from storage
+        for (var media in memory.media!) {
+          if (media.url != null) {
+            try {
+              final ref = FirebaseStorage.instance.refFromURL(media.url!);
+              await ref.delete();
+            } catch (e) {
+              print('Error deleting media file: $e');
+              // Continue with deletion even if media deletion fails
+            }
+          }
+        }
+      }
+
+      // Delete associated therapy outlines
+      await _therapyOutlineRepository.deleteTherapyOutlinesByMemoryId(id);
+
+      // Delete the memory document
+      await _firestore.collection('memories').doc(id).delete();
+    } catch (e) {
+      throw Exception('Error deleting memory: $e');
     }
   }
 }

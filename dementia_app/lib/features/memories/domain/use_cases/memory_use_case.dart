@@ -36,4 +36,9 @@ class MemoryUseCase {
   Future<String> uploadMedia(File file, String fileName) async {
     return await _repository.uploadMedia(file, fileName);
   }
+
+  // Delete a memory and its associated media
+  Future<void> deleteMemory(String memoryId) async {
+    await _repository.deleteMemory(memoryId);
+  }
 }
