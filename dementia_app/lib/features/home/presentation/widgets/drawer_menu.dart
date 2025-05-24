@@ -114,7 +114,7 @@ class DrawerMenuState extends State<DrawerMenu> {
           ),
           ListTile(
             leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
+            title: const Text('User Settings'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
               Navigator.push(
