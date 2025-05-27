@@ -20,7 +20,7 @@ class MatchingArtistActivityPage extends StatefulWidget {
 }
 
 class _MatchingArtistActivityPageState
-    extends State<MatchingArtistActivityPage> {
+  extends State<MatchingArtistActivityPage> {
   late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
@@ -29,6 +29,8 @@ class _MatchingArtistActivityPageState
   bool _isAnswered = false;
   bool _isCorrect = false;
   bool _isLoading = true;
+  
+  final supabaseUrl = Constants.supabaseUrl;
   
   List<Map<String, dynamic>> _artists = [];
   List<Map<String, dynamic>> _shuffledArtists = [];
@@ -64,10 +66,10 @@ class _MatchingArtistActivityPageState
         }
       }
       
-      // Create artist objects with image URLs
+      //create artist objects with image URLs
       _artists = artistFolders.map((folderName) {
         String artistName = folderName.replaceAll('_', ' ');
-        String imageUrl = '${Constants.artistImageUrl}/$folderName.jpg';
+        String imageUrl = '$supabaseUrl/storage/v1/object/public/matching_artist_common_music/artist_images/$folderName.jpg';
         
         return {
           'name': artistName,
@@ -83,7 +85,7 @@ class _MatchingArtistActivityPageState
       });
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading artists: $e');
+        debugPrint('Error loading artists: $e');
       }
       setState(() {
         _isLoading = false;
@@ -110,28 +112,28 @@ class _MatchingArtistActivityPageState
           (artist) => artist['name'] == correctArtistName);
       
       if (correctArtistInList != -1) {
-        // Replace the first element with the correct artist
+        //replace the first element with the correct artist
         _shuffledArtists[0] = _artists[correctArtistInList];
       } else {
-        // If not found in our list, create a custom entry with default image
+        //if not found in our list, create a custom entry with default image
         final artistFolder = correctArtistName.replaceAll(' ', '_');
         _shuffledArtists[0] = {
           'name': correctArtistName,
-          'image': 'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpg',
+          'image': '$supabaseUrl/storage/v1/object/public/matching_artist_common_music/artist_images/$artistFolder.jpg',
           'folder': artistFolder,
         };
       }
     }
     
-    // Only take the first 5 artists
+    //only take the first 5 artists
     _shuffledArtists = _shuffledArtists.take(5).toList();
   }
 
   Future<void> _initializePlayer() async {
     try {
-      // Supabase storage URL
+      // supabase storage URL
       final String songUrl =
-          'https://scffupiugkbxqtinuwqs.supabase.co/storage/v1/object/public/matching_artist_common_music/${widget.song['url']}';
+          '$supabaseUrl/storage/v1/object/public/matching_artist_common_music/${widget.song['url']}';
 
       await _audioPlayer.setUrl(songUrl);
       _audioPlayer.playerStateStream.listen((state) {
@@ -155,7 +157,7 @@ class _MatchingArtistActivityPageState
       });
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing player: $e');
+        debugPrint('Error initializing player: $e');
       }
     }
   }
@@ -209,15 +211,15 @@ class _MatchingArtistActivityPageState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                _resetActivity(); // Reset the activity
+                Navigator.of(context).pop();
+                _resetActivity();
               },
               child: const Text('Try Again'),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Go back to song search page
+                Navigator.of(context).pop(); 
+                Navigator.of(context).pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isCorrect ? Colors.green : const Color.fromARGB(255, 255, 106, 95),
@@ -238,14 +240,14 @@ class _MatchingArtistActivityPageState
       _isCorrect = selectedArtist == widget.song['artist'];
     });
 
-    // Add haptic feedback
+    //add haptic feedback
     if (_isCorrect) {
       HapticFeedback.lightImpact();
     } else {
       HapticFeedback.vibrate();
     }
 
-    // Show result with a small delay
+    //show result with a small delay
     Future.delayed(const Duration(milliseconds: 500), () {
       _showResultDialog(_isCorrect);
     });

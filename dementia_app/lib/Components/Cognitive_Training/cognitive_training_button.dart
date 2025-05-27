@@ -43,8 +43,8 @@ class TrainingButton extends StatelessWidget {
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
-                overflow: TextOverflow.ellipsis, // Handle overflow
-                maxLines: 1, // Ensure single line
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],

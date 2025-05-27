@@ -1,3 +1,4 @@
+import 'package:dementia_app/Pages/dashboard_page.dart';
 import 'package:dementia_app/Pages/sign_in_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const HomePage(),
+      // home: const DashboardPage(),
     );
   }
 }

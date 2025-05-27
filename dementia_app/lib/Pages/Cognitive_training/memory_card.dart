@@ -450,14 +450,14 @@ class _MemoryCardGamePageState extends State<MemoryCardGamePage> {
                         ],
                       ),
                       
-                      // Separator
+                      //separator
                       Container(
                         height: 24,
                         width: 1,
                         color: Colors.grey.withOpacity(0.3),
                       ),
                       
-                      // Attempts counter
+                      //attempts counter
                       Row(
                         children: [
                           const Icon(Icons.compare_arrows, size: 18, color: Colors.blue),
@@ -472,7 +472,7 @@ class _MemoryCardGamePageState extends State<MemoryCardGamePage> {
                         ],
                       ),
                       
-                      // // Score counter
+                      // Score counter
                       // Row(
                       //   children: [
                       //     const Icon(Icons.stars, size: 18, color: Colors.amber),

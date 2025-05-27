@@ -1,4 +1,3 @@
-import 'package:dementia_app/Pages/Cognitive_training/cash_tally_results_page.dart';
 import 'package:dementia_app/Shared/constants.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -6,17 +5,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../Components/user_avatar.dart';
+import 'cash_tally_results_page.dart';
 import '../../Models/Cognitive_Training/cash_tally_models.dart';
-import '../../Data/Cognitive_Training/cash_tally_easy_questions.dart';
-import '../../Data/Cognitive_Training/cash_tally_medium_questions.dart';
-import '../../Data/Cognitive_Training/cash_tally_hard_questions.dart';
+import '../../API/cash_tally_openAI_api.dart' show DifficultyLevel, CashTallyOpenAIAPI;
+import '../../Services/Cognitive_Training/cash_tally_question_generator_service.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
-enum DifficultyLevel {
-  easy,
-  medium,
-  hard
-}
+// Use the DifficultyLevel enum from the API file instead of redefining it here
 final String baseUrl = Constants.baseAPIUrl;
 
 class CashTallyPage extends StatefulWidget {
@@ -34,6 +29,10 @@ class _CashTallyPageState extends State<CashTallyPage> {
   final int numberOfQuestionsToShow = 5;
   DifficultyLevel currentDifficulty = DifficultyLevel.easy;
   bool quizCompleted = false;
+  bool isLoading = true;
+  
+  // Question generator
+  late CashTallyQuestionGenerator questionGenerator;
   
   //get Supabase instance
   final supabase = Supabase.instance.client;
@@ -41,42 +40,59 @@ class _CashTallyPageState extends State<CashTallyPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize the OpenAI service if enabled
+    final CashTallyOpenAIAPI? openAIService = Constants.useOpenAIForQuestions 
+        ? CashTallyOpenAIAPI(apiKey: Constants.openAIAPIKey)
+        : null;
+    
+    // Initialize the question generator
+    questionGenerator = CashTallyQuestionGenerator(openAIService: openAIService);
+    
     //load questions for initial difficulty
     loadQuestions();
   }
   
   //load questions based on current difficulty
-  void loadQuestions() {
-    List<CashTallyQuestion> allQuestions;
+  Future<void> loadQuestions() async {
+    setState(() {
+      isLoading = true;
+    });
     
-    //get questions from appropriate source based on difficulty
-    switch (currentDifficulty) {
-      case DifficultyLevel.easy:
-        allQuestions = CashTallyDataEasy.getEasyQuestions();
-        break;
-      case DifficultyLevel.medium:
-        allQuestions = CashTallyDataMedium.getMediumQuestions();
-        break;
-      case DifficultyLevel.hard:
-        allQuestions = CashTallyDataHard.getHardQuestions();
-        break;
+    try {
+      // Get questions from generator
+      final generatedQuestions = await questionGenerator.getQuestions(
+        difficulty: currentDifficulty,
+        numberOfQuestions: numberOfQuestionsToShow,
+        useAI: Constants.useOpenAIForQuestions,
+      );
+      
+      setState(() {
+        questions = generatedQuestions;
+        // Initialize answer array based on selected questions
+        userAnswers = List.filled(questions.length, null);
+        currentQuestionIndex = 0;
+        quizCompleted = false;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error loading questions: $e');
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load questions. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      
+      setState(() {
+        isLoading = false;
+      });
     }
-    
-    //shuffle and select random questions
-    if (allQuestions.length <= numberOfQuestionsToShow) {
-      //if we have 5 or fewer questions, use all of them
-      questions = allQuestions;
-    } else {
-      //shuffle the questions randomly
-      allQuestions.shuffle(Random());
-      //take only the first 5 questions
-      questions = allQuestions.sublist(0, numberOfQuestionsToShow);
-    }
-    
-    // Initialize answer array based on selected questions
-    userAnswers = List.filled(questions.length, null);
-    currentQuestionIndex = 0;
-    quizCompleted = false;
   }
   
   // Change difficulty level
@@ -84,12 +100,12 @@ class _CashTallyPageState extends State<CashTallyPage> {
     if (newDifficulty != currentDifficulty) {
       setState(() {
         currentDifficulty = newDifficulty;
-        loadQuestions();
       });
+      loadQuestions();
     }
   }
   
-  //calculate score
+  // Calculate score
   int get score {
     int count = 0;
     for (int i = 0; i < questions.length; i++) {
@@ -156,7 +172,7 @@ class _CashTallyPageState extends State<CashTallyPage> {
       // Prepare data for API
       final Map<String, dynamic> data = {
         "user_id": currentUser.id,
-        "cognitive_training_id": 1, // ID for Cash Tally activity
+        "cognitive_training_id": 1, //Cash Tally activity
         "level": difficulty,
         "score": scorePercentage.round(),
         "error_count": errorPercentage.round()
@@ -218,7 +234,7 @@ class _CashTallyPageState extends State<CashTallyPage> {
       }
       
       if (kDebugMode) {
-        debugPrint("Error sending results to API");
+        debugPrint("Error sending results to API: $e");
       }
     }
   }
@@ -325,9 +341,7 @@ class _CashTallyPageState extends State<CashTallyPage> {
   
   //reset the quiz
   void resetQuiz() {
-    setState(() {
-      loadQuestions();
-    });
+    loadQuestions();
     
     //if on results page, pop back to questions
     if (Navigator.canPop(context)) {
@@ -357,10 +371,24 @@ class _CashTallyPageState extends State<CashTallyPage> {
             colors: [Colors.blue[100]!, Colors.blue[50]!],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: _buildQuestionScreen(),
-        ),
+        child: isLoading 
+            ? const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Generating questions...',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildQuestionScreen(),
+              ),
       ),
     );
   }
@@ -577,3 +605,4 @@ class _CashTallyPageState extends State<CashTallyPage> {
     );
   }
 }
+
