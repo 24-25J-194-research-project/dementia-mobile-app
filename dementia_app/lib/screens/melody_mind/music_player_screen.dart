@@ -52,21 +52,21 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
   int _beatSkipFactor =
       0; // 0 = every beat, 1 = every 2nd beat, 2 = every 4th beat
   int _beatCounter =
-      0; // Tracks the beat number for determining when to show visual cue
+      0; //tracks the beat number for determining when to show visual cue
 
-  // Settings for rhythm interaction
-  bool _showTapGuide = true; //show visual "TAP NOW" guide
-  bool _enableHapticFeedback = true; //provide haptic feedback on taps
-  double _syncThreshold = 350.0; //milliseconds of tolerance for sync
+  //settings for rhythm interaction
+  bool _showTapGuide = true; 
+  bool _enableHapticFeedback = true; 
+  double _syncThreshold = 350.0; 
 
   bool _trackLoaded = false;
   bool _clapDetectorInitialized = false;
   bool _countdownShown = false;
 
-  // calibration flag
+  //calibration flag
   bool _noiseCalibrated = false;
 
-  // AI companion
+  //aI companion
   AICompanionService? _aiCompanion;
   String _currentAIMessage = "";
   bool _showAIMessage = false;
@@ -79,7 +79,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     WidgetsBinding.instance.addObserver(this);
     _initAudioSession();
 
-    // Reset all state variables to default values
+    //reset all state variables to default values
     _isLoading = true;
     _isPlaying = false;
     _duration = Duration.zero;
@@ -109,7 +109,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     _clapDetector.init().then((_) {
       _clapDetector.onClapDetected = _handleClap;
 
-      // Set up callbacks for calibration
+    
       _clapDetector.onCalibrationUpdate = (level) {
         print("Calibration level update: $level");
       };
@@ -143,7 +143,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
       final currentUser = Supabase.instance.client.auth.currentUser;
 
       if (currentUser != null) {
-        // Initialize AI Companion with user context
+      
         await _aiCompanion!.initializeForPatient(currentUser.id);
         print("AI Companion initialized for user: ${currentUser.id}");
       } else {
@@ -191,17 +191,17 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
       // for songs with bpm > 100, default to "relaxed" rhythmn pace
       final defaultBeatSkipFactor = songBpm > 100 ? 1 : 0;
 
-      // Extract BPM from metadata
+      //extract BPM from metadata
       setState(() {
         _bpm = songBpm;
         _beatSkipFactor = defaultBeatSkipFactor;
         _isLoading = false;
-        _trackLoaded = true; // Add this state variable
+        _trackLoaded = true; 
       });
 
       print("BPM extracted: $_bpm");
 
-      // Check if both track and clap detector are ready
+      //check if both track and clap detector are ready
       _checkReadyAndShowCountdown();
     } catch (e) {
       print('Error in _loadTrackOnly: $e');
@@ -224,7 +224,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     if (_trackLoaded && _clapDetectorInitialized && !_countdownShown) {
       if (!_noiseCalibrated) {
         print("Starting noise calibration flow");
-        // Show noise calibration dialog first
+        //show noise calibration dialog first
         _showNoiseCalibrationDialog();
       } else {
         print("Skipping calibration, showing countdown directly");
@@ -240,7 +240,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
 
     print("Displaying countdown dialog");
 
-    // Show countdown dialog
+    //show countdown dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -248,7 +248,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
         return CountdownDialog(
           onCountdownComplete: () {
             print("Countdown complete, starting playback");
-            // Start everything when countdown completes
+            
             _startPlaybackAndClapDetection();
           },
         );
@@ -268,7 +268,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
       });
     };
 
-    // Show dialog with improved callback handling
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -278,7 +278,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
             print(
                 "NoiseCalibrationDialog completed with threshold: $threshold");
 
-            // Dialog is now closed, safe to show next dialog after a short delay
             Future.delayed(Duration(milliseconds: 500), () {
               if (mounted) {
                 print("Showing countdown dialog after calibration");
@@ -299,7 +298,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
 
   Future<void> _startPlaybackAndClapDetection() async {
     try {
-      // Start music playback
+      //start music playback
       final success = await _musicService.playTrack(
           trackData: _trackInfo,
           artist: widget.song['artist']!,
@@ -312,7 +311,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
         print("Playback started!");
         _startRhythmNotifications();
 
-        // Start clap detection after music starts
+        //start clap detection after music starts
         _clapDetector.startListening();
         print("Clap detection started!");
       } else if (mounted) {
@@ -383,11 +382,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
           _maxConsecutiveSyncTaps =
               max(_maxConsecutiveSyncTaps, _consecutiveSyncTaps);
         } else {
-          // Only reset completely on very bad timing
+          //only reset completely on very bad timing
           if (tapQuality < 0.3) {
             _consecutiveSyncTaps = 0;
           } else if (_consecutiveSyncTaps > 0) {
-            // Just reduce for close misses
+            //just reduce for close misses
             _consecutiveSyncTaps--;
           }
         }
@@ -540,7 +539,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
           _isPlaying = isNowPlaying;
         });
 
-        // Handle rhythm animation based on play state changes
+        //handle rhythm animation based on play state changes
         if (isNowPlaying && _rhythmTimer == null) {
           print('Player started playing - starting rhythm timer');
           _startRhythmNotifications();
@@ -549,7 +548,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
           print('Player stopped playing - cancelling rhythm timer');
           _rhythmTimer?.cancel();
           _rhythmTimer = null;
-          // Ensure animation is stopped
           setState(() {
             _showBeatAnimation = false;
           });
@@ -559,7 +557,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
         if (state.processingState == ProcessingState.completed) {
           print('Playback completed');
 
-          // Ensure timer is cancelled when playback completes
+          // timer is cancelled when playback completes
           if (_rhythmTimer != null) {
             _rhythmTimer?.cancel();
             _rhythmTimer = null;
@@ -604,7 +602,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
         return;
       }
 
-      // Extract BPM from metadata
+      //extract BPM from metadata
       setState(() {
         _bpm = _trackInfo!['bpm'] ?? 90;
         _isLoading = false;
@@ -612,7 +610,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
 
       print("BPM extracted: $_bpm");
 
-      // Play the track
+      //play the track
       final success = await _musicService.playTrack(
           trackData: _trackInfo,
           artist: widget.song['artist']!,
@@ -645,22 +643,22 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
 
   //calculate a user-friendly BPM for interaction
   int _getEffectiveBpm(int songBpm) {
-    //for very fast songs (faster than 160 BPM), use quarter-time
+    //for very fast songs 
     if (songBpm > 160) {
       return (songBpm / 4).round();
     }
 
-    //for fast songs (120-160 BPM), use half-time
+    //for fast songs 
     else if (songBpm > 120) {
       return (songBpm / 2).round();
     }
 
-    //for very slow songs (slower than 50 BPM), use double-time
+    //for very slow songs 
     else if (songBpm < 50) {
       return (songBpm * 2).round();
     }
 
-    //for normal tempo songs (50-120 BPM), keep original BPM
+    //for normal tempo songs
     else {
       return songBpm;
     }
@@ -713,11 +711,10 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     print('Original BPM: $songBpm, Adapted BPM: $effectiveBpm');
     print('Beat interval: $beatInterval ms, Showing every $skipValue beat');
 
-    // Create rhythm timer
-    // Create rhythm timer - this always runs at the song's actual rhythm
+    //create rhythm timer
     _rhythmTimer =
         Timer.periodic(Duration(milliseconds: beatInterval), (timer) {
-      // Increment beat counter
+      
       _beatCounter++;
 
       //only show visual cue on selected beats based on skip factor
@@ -729,7 +726,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
           //only show the animation on selected beats
           _showBeatAnimation = shouldShowCue;
 
-          //always update the last beat time for accurate timing calculations
           _lastBeatTime = DateTime.now();
         });
 
@@ -835,7 +831,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     }
   }
 
-  // submit analytics data when music ends
+  //submit analytics data when music ends
   Future<void> _submitAnalytics() async {
     try {
       final supabase = Supabase.instance.client;
@@ -867,7 +863,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
       print('submitted analytics: $response');
       print('Analytics submitted successfully to Supabase');
 
-      // Show success feedback to user
+      //show success feedback to user
       if (mounted) {
         _showCompletionFeedback(true);
       }
@@ -997,7 +993,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
     );
   }
 
-  // Show the settings dialog
+  //show the settings dialog
   void _showSettingsDialog() {
     final wasPlaying = _isPlaying;
 
@@ -1492,23 +1488,23 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
   @override
   void dispose() {
     print('Disposing MusicPlayerScreen');
-    // Clean up resources
+    
     _rhythmTimer?.cancel();
     _rhythmTimer = null;
 
-    // Reset counters and state variables
+    
     _consecutiveSyncTaps = 0;
     _maxConsecutiveSyncTaps = 0;
     _totalTaps = 0;
     _beatCounter = 0;
 
-    // Stop playback before disposing
+    
     _musicService.stop();
 
-    // clap detector dispose
+    
     _clapDetector.dispose();
 
-    // Remove observer
+    
     WidgetsBinding.instance.removeObserver(this);
 
     super.dispose();
@@ -1610,7 +1606,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
 
     return WillPopScope(
       onWillPop: () async {
-        // Make sure we properly stop the music and clean up before popping
         print('Back button pressed, cleaning up before navigation');
         _rhythmTimer?.cancel();
         _aiMessageTimer?.cancel(); // cleanup AI timer
@@ -1771,7 +1766,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
                                   ),
                                 ),
 
-                                // Tap indicator - only visible during beat and if guide is enabled
+                                // Tap indicator 
                                 if (_showBeatAnimation && _showTapGuide)
                                   Positioned(
                                     top: 70,
@@ -1855,7 +1850,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
                                         ? _duration.inSeconds.toDouble()
                                         : 1.0, // Prevent division by zero
                                     onChanged:
-                                        null, // Setting this to null makes the slider non-interactive
+                                        null,
                                   ),
                                 ),
 
@@ -1956,7 +1951,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen>
                                     // ),
                                     SizedBox(height: 4),
                                     _buildRhythmFeedback(),
-                                    // Add some extra padding at the bottom to ensure all content is visible
                                     SizedBox(height: 16),
                                   ],
                                 ),
