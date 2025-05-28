@@ -1,4 +1,4 @@
-import 'package:dementia_app/melody_mind/components/toggle_page.dart';
+import 'package:dementia_app/screens/melody_mind/sign_in_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TogglePage(),
+      home: HomePage(),
     );
   }
 }

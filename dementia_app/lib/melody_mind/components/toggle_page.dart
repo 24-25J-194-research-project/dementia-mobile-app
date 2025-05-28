@@ -1,5 +1,5 @@
-import 'package:dementia_app/melody_mind/components/home_screen.dart';
-import 'package:dementia_app/screens/melody_mind/prompt_screen.dart';
+import 'package:dementia_app/melody_mind/components/melody_onboarding_screen.dart';
+import 'package:dementia_app/screens/melody_mind/music_library_screen.dart';
 import 'package:flutter/material.dart';
 
 class TogglePage extends StatefulWidget {
@@ -10,23 +10,36 @@ class TogglePage extends StatefulWidget {
 }
 
 class _TogglePageState extends State<TogglePage> {
-  bool _showHomeScreen = true;
+  // 0 = Home Screen, 1 = Music Library Screen
+  int _currentScreen = 0;
 
-  void _toggleScreen() {
+  void _showHomeScreen() {
     setState(() {
-      _showHomeScreen = !_showHomeScreen;
+      _currentScreen = 0;
     });
   }
+
+  void _showMusicLibraryScreen() {
+    setState(() {
+      _currentScreen = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if ( _showHomeScreen) {
-      return HomeScreen(
-        showPromptScreen: _toggleScreen,
-      );
-    }else{
-      return PromptScreen(
-        showHomeScreen: _toggleScreen,
-      );
+    switch (_currentScreen) {
+      case 0:
+        return MelodyOnboardingScreen(
+          showMusicLibraryScreen: _showMusicLibraryScreen,
+        );
+      case 1:
+        return MusicLibraryScreen(
+          showHomeScreen: _showHomeScreen,
+        );
+      default:
+        return MelodyOnboardingScreen(
+          showMusicLibraryScreen: _showMusicLibraryScreen,
+        );
     }
   }
 }

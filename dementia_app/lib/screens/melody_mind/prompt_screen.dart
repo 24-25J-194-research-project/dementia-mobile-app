@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dementia_app/melody_mind/components/age_selector.dart';
+import 'package:dementia_app/melody_mind/components/scrolling_text.dart';
 import 'package:dementia_app/screens/melody_mind/music_player_screen.dart';
 import 'package:dementia_app/screens/melody_mind/random_circles.dart';
 import 'package:flutter/material.dart';
@@ -169,30 +170,6 @@ class _PromptScreenState extends State<PromptScreen> {
     //   ScaffoldMessenger.of(context).showSnackBar(
     //     const SnackBar(content: Text('Failed to fetch playlist')),
     //   );
-    // }
-  }
-
-  Future<void> _openSpotify() async {
-    // final playlistQuery = _playlist
-    //     .map((song) => '${song['artist']} - ${song['title']}')
-    //     .join(', ');
-    // final url = Uri.parse('https://open.spotify.com/search/$playlistQuery');
-    // if (await canLaunchUrl(url)) {
-    //   await launchUrl(url, mode: LaunchMode.externalApplication);
-    // } else {
-    //   throw 'Could not launch $url';
-    // }
-  }
-
-  Future<void> _openAudiomack() async {
-    // final playlistQuery = _playlist
-    //     .map((song) => '${song['artist']} - ${song['title']}')
-    //     .join(', ');
-    // final url = Uri.parse('https://audiomack.com/search/$playlistQuery');
-    // if (await canLaunchUrl(url)) {
-    //   await launchUrl(url, mode: LaunchMode.externalApplication);
-    // } else {
-    //   throw 'Could not launch $url';
     // }
   }
 
@@ -433,89 +410,6 @@ class _PromptScreenState extends State<PromptScreen> {
                         Expanded(
                           child: Stack(
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: Center(
-                                              child: Text(
-                                                'Create Playlist on?',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 16.0,
-                                                  fontWeight: FontWeight.w400,
-                                                ),
-                                              ),
-                                            ),
-                                            content: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                // spotify container
-                                                GestureDetector(
-                                                  onTap: _openSpotify,
-                                                  child: Container(
-                                                    height: 50.0,
-                                                    width: 50.0,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      image: DecorationImage(
-                                                        image: AssetImage(
-                                                          "assets/images/spotify.png",
-                                                        ),
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  width: 8.0,
-                                                ),
-                                                // Audiomack container
-                                                GestureDetector(
-                                                  onTap: _openAudiomack,
-                                                  child: Container(
-                                                    height: 50.0,
-                                                    width: 50.0,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      image: DecorationImage(
-                                                        image: AssetImage(
-                                                          "assets/images/audiomack.png",
-                                                        ),
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: Container(
-                                      height: 40.0,
-                                      width: 40.0,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFFFFFFF),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.playlist_add_rounded,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                               Padding(
                                 padding: const EdgeInsets.only(top: 40.0),
                                 // Selected Mood image
@@ -633,10 +527,6 @@ class _PromptScreenState extends State<PromptScreen> {
                                       borderRadius: BorderRadius.circular(30.0),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(8.0),
@@ -662,46 +552,36 @@ class _PromptScreenState extends State<PromptScreen> {
                                             ),
                                           ),
                                         ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 16.0),
+                                        const SizedBox(width: 16.0),
+                                        Expanded(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              SizedBox(
+                                              ScrollingText(
+                                                text: song['artist']!,
+                                                style: const TextStyle(
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.w300,
+                                                  color: Color(0xFFFFFFFF),
+                                                ),
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .width *
-                                                    0.5,
-                                                child: Text(
-                                                  song['artist']!,
-                                                  style: const TextStyle(
-                                                    fontSize: 14.0,
-                                                    fontWeight: FontWeight.w300,
-                                                    color: Color(0xFFFFFFFF),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  maxLines: 1,
-                                                ),
+                                                    0.6,
                                               ),
-                                              SizedBox(
+                                              const SizedBox(height: 4.0),
+                                              ScrollingText(
+                                                text: song['title']!,
+                                                style: const TextStyle(
+                                                  fontSize: 16.0,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFFFFFFFF),
+                                                ),
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .width *
-                                                    0.5,
-                                                child: Text(
-                                                  song['title']!,
-                                                  style: const TextStyle(
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFFFFFFFF),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  maxLines: 1,
-                                                ),
+                                                    0.6,
                                               ),
                                             ],
                                           ),

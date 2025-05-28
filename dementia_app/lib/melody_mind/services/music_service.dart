@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -5,28 +7,35 @@ class MusicService {
   final SupabaseClient _supabase;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  // Singleton instance
   static final MusicService _instance = MusicService._internal();
 
-  // Factory constructor
   factory MusicService() {
     return _instance;
   }
 
-  // Private constructor
   MusicService._internal() : _supabase = Supabase.instance.client {
-    // Initialize audio player if needed
     _initAudioPlayer();
   }
 
   void _initAudioPlayer() {
-    // Configure audio player settings if needed
+    
   }
 
-  // Find a track in the library based on artist and title
+  
+  //cache tracks
+  final Map<String, Map<String, dynamic>> _trackCache = {};
+
+  //find a track in the library based on artist and title
   Future<Map<String, dynamic>?> findTrack(String artist, String title) async {
+    final cacheKey = '$artist - $title';
+
+    //check if track is already in cache
+    if (_trackCache.containsKey(cacheKey)) {
+      log('Found track in cache: $cacheKey');
+      return _trackCache[cacheKey];
+    }
     try {
-      // Use the RPC function
+      //use the RPC function
       final response = await _supabase.rpc('find_track', params: {
         'p_artist': artist,
         'p_title': title,
@@ -36,6 +45,8 @@ class MusicService {
         print(
             'Found track via RPC: ${response[0]['artist']} - ${response[0]['title']}');
         print('File path in database: ${response[0]['file_path']}');
+        //cache the track for future requests
+        _trackCache[cacheKey] = response[0];
         return response[0];
       }
 
@@ -47,26 +58,66 @@ class MusicService {
     }
   }
 
-  // Get streaming URL for a track
+  //fetch all tracks from the database
+  Future<List<Map<String, dynamic>>> getAllTracks() async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      final response = await supabase
+          .from('music_tracks')
+          .select('id, title, artist, bpm, duration, file_path')
+          .order('title', ascending: true);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      log('Error fetching all tracks: $e');
+      return [];
+    }
+  }
+
+  //search tracks by query
+  Future<List<Map<String, dynamic>>> searchTracks(String query) async {
+    if (query.isEmpty) {
+      return getAllTracks();
+    }
+
+    try {
+      final supabase = Supabase.instance.client;
+      final lowerQuery = query.toLowerCase();
+
+      final response = await supabase
+          .from('music_tracks')
+          .select('id, title, artist, bpm, duration, file_path')
+          .or('title.ilike.%$lowerQuery%,artist.ilike.%$lowerQuery%')
+          .order('title', ascending: true);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      log('Error searching tracks: $e');
+      return [];
+    }
+  }
+
+  //get streaming URL for a track
   Future<String?> getStreamUrl(String fileName) async {
     try {
-      // Ensure we're working with just the filename (no paths or URLs)
+      //ensure we are working with just the filename
       String cleanFileName = fileName;
 
-      // If we have a full URL, extract just the filename
+      //if we have a full URL, extract just the filename
       if (fileName.startsWith('http')) {
         final uri = Uri.parse(fileName);
         final pathSegments = uri.pathSegments;
         cleanFileName = pathSegments.isNotEmpty ? pathSegments.last : '';
       }
-      // If we have a path with slashes, extract just the filename
+      //if we have a path with slashes, extract just the filename
       else if (fileName.contains('/')) {
         cleanFileName = fileName.split('/').last;
       }
 
       print('Getting URL for file: $cleanFileName');
 
-      // Generate a public URL using the bucket name and file name
+      //generate a public URL using the bucket name and file name
       final publicUrl =
           _supabase.storage.from('musics').getPublicUrl(cleanFileName);
       print('Generated URL: $publicUrl');
@@ -78,13 +129,13 @@ class MusicService {
     }
   }
 
-  // Play a track
+  //play a track
   Future<bool> playTrack(
       {Map<String, dynamic>? trackData, String? artist, String? title}) async {
     try {
       Map<String, dynamic>? track;
 
-      // Use the track data if provided, otherwise look it up
+      //use the track data if provided, otherwise look it up
       if (trackData != null) {
         track = trackData;
       } else if (artist != null && title != null) {
@@ -121,30 +172,30 @@ class MusicService {
     }
   }
 
-  // Get current audio player
+  //get current audio player
   AudioPlayer get player => _audioPlayer;
 
-  // Pause playback
+  //pause playback
   Future<void> pause() async {
     await _audioPlayer.pause();
   }
 
-  // Resume playback
+  //resume playback
   Future<void> resume() async {
     await _audioPlayer.play();
   }
 
-  // Stop playback
+  //stop playback
   Future<void> stop() async {
     await _audioPlayer.stop();
   }
 
-  // Seek to position
+  //seek to position
   Future<void> seek(Duration position) async {
     await _audioPlayer.seek(position);
   }
 
-  // Dispose resources
+  //dispose resources
   void dispose() {
     _audioPlayer.dispose();
   }
